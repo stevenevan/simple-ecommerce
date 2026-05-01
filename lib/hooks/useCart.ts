@@ -12,10 +12,12 @@ import { useMe } from './useMe'
 
 export type CartResponse = { items: CartItemView[]; subtotalCents: number }
 
+export const CART_KEY = ['cart'] as const
+
 export function useCart() {
   const { data: me } = useMe()
   return useQuery({
-    queryKey: ['cart'],
+    queryKey: CART_KEY,
     queryFn: () => api.get('cart').json<CartResponse>(),
     enabled: !!me?.user,
     staleTime: 0,
