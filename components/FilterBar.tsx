@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
   Select,
@@ -23,6 +23,10 @@ const SORT_OPTIONS: { value: ClientSortKey; label: string }[] = [
   { value: 'price_desc', label: 'Price ↓' },
   { value: 'name_asc',   label: 'Name A–Z' },
 ]
+
+const SORT_ITEMS: Record<string, string> = Object.fromEntries(
+  SORT_OPTIONS.map((o) => [o.value, o.label]),
+)
 
 export function FilterBar() {
   const router = useRouter()
@@ -66,9 +70,18 @@ export function FilterBar() {
   const { data: categories } = useCategories()
   const categoryOptions = categories ?? []
 
+  const categoryItems = useMemo<Record<string, string>>(
+    () => ({
+      [ALL_VALUE]: 'All categories',
+      ...Object.fromEntries(categoryOptions.map((c) => [c, c])),
+    }),
+    [categoryOptions],
+  )
+
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
       <Select
+        items={categoryItems}
         value={category === '' ? ALL_VALUE : category}
         onValueChange={(v) => setParam('category', !v || v === ALL_VALUE ? '' : v)}
       >
@@ -81,7 +94,11 @@ export function FilterBar() {
         </SelectContent>
       </Select>
 
-      <Select value={sort} onValueChange={(v) => setParam('sort', !v || v === 'newest' ? '' : v)}>
+      <Select
+        items={SORT_ITEMS}
+        value={sort}
+        onValueChange={(v) => setParam('sort', !v || v === 'newest' ? '' : v)}
+      >
         <SelectTrigger className="w-full sm:w-40"><SelectValue /></SelectTrigger>
         <SelectContent>
           {SORT_OPTIONS.map((o) => (

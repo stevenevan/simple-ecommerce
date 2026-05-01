@@ -6,6 +6,11 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/lib/utils"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
+// Pass `items` (Record<value,label>) or `itemToStringLabel` to <Select> when
+// using <SelectValue/> in the trigger — otherwise the trigger displays the raw
+// value instead of the label. SelectItem children do NOT participate in
+// trigger-label resolution.
+// See node_modules/@base-ui/react/internals/resolveValueLabel.js -> resolveSelectedLabel.
 const Select = SelectPrimitive.Root
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
