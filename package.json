@@ -10,7 +10,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "oxlint",
-    "type:check": "tsc --noEmit"
+    "type:check": "tsc --noEmit",
+    "db:migrate": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON lib/db/migrate.ts",
+    "db:seed": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON lib/db/seed.ts",
+    "db:reset": "rm -f data/app.db data/app.db-* && bun run db:migrate && bun run db:seed"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",

@@ -48,6 +48,7 @@ next-env.d.ts
 
 # but keep seed assets committed (Wk2)
 !/data/seed/
+!/data/seed/**
 
 # env example must always be committable (Wk6)
 !.env.example
