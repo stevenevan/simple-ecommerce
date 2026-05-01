@@ -43,6 +43,8 @@ export function useCreateOrder() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['orders'] })
       qc.invalidateQueries({ queryKey: ['cart'] })
+      // Server decremented stock for each ordered item — refetch the catalog so the grid reflects new stock.
+      qc.invalidateQueries({ queryKey: ['products'] })
       toast.success('Order placed')
     },
     onError: (err) => toast.error(friendlyOf(err.message)),
