@@ -1,3 +1,5 @@
+import type { ClientSortKey } from './sort'
+
 export type Product = {
   id: number
   slug: string
@@ -11,3 +13,11 @@ export type Product = {
 }
 
 export type ApiError = { error: string }
+
+export type ProductListQuery = {
+  category?: string
+  sort?: ClientSortKey
+  q?: string
+  limit?: number
+  offset?: number
+}
