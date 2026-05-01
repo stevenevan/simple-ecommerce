@@ -19,6 +19,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "oxlint": "^1.62.0",
+    "oxlint-tsgolint": "^0.22.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
