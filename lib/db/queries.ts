@@ -6,7 +6,14 @@
 import { sql } from 'kysely'
 import { getDb } from './index.ts'
 import { kdb } from './kysely.ts'
-import type { Product, CartItemView } from '@/lib/types'
+import type {
+  Product,
+  CartItemView,
+  OrderRow,
+  OrderItemSnapshot,
+  OrderListItem,
+} from '@/lib/types'
+import type { CheckoutShippingInput } from '@/lib/schemas/checkout'
 
 export const SORT_COLUMNS = {
   price_asc:  'price_cents ASC',
@@ -209,4 +216,115 @@ export async function getCartItemOwnership(
     .where('cart_id', '=', cartId)
     .executeTakeFirst()
   return row?.product_id ?? null
+}
+
+// Order helpers — async (Kysely). Plan §6.
+
+export function createOrderForUser(
+  userId: number,
+  shipping: CheckoutShippingInput,
+): Promise<{ id: number }> {
+  return kdb.transaction().execute(async (trx) => {
+    // R1 — inline cart lookup; never call getOrCreateCart() (uses kdb, not trx).
+    const cart = await trx
+      .selectFrom('carts')
+      .select('id')
+      .where('user_id', '=', userId)
+      .executeTakeFirst()
+    if (!cart) throw new Error('cart_empty')
+
+    const items = await trx
+      .selectFrom('cart_items as ci')
+      .innerJoin('products as p', 'p.id', 'ci.product_id')
+      .select([
+        'ci.id as id',
+        'ci.product_id as productId',
+        'ci.quantity as quantity',
+        'p.name as name',
+        'p.price_cents as price_cents',
+      ])
+      .where('ci.cart_id', '=', cart.id)
+      .orderBy('ci.id')
+      .execute()
+    if (items.length === 0) throw new Error('cart_empty')
+
+    let totalCents = 0
+    for (const it of items) {
+      const r = await trx
+        .updateTable('products')
+        .set({ stock: sql`stock - ${it.quantity}` })
+        .where('id', '=', it.productId)
+        .where('stock', '>=', it.quantity)
+        .executeTakeFirst()
+      if (Number(r.numUpdatedRows) === 0) throw new Error('insufficient_stock')
+      totalCents += it.price_cents * it.quantity
+    }
+    if (!Number.isSafeInteger(totalCents)) throw new Error('total_overflow')
+
+    const order = await trx
+      .insertInto('orders')
+      .values({
+        user_id: userId,
+        total_cents: totalCents,
+        shipping_name: shipping.name,
+        shipping_address: shipping.address,
+        shipping_city: shipping.city,
+        shipping_zip: shipping.zip,
+      })
+      .returning('id')
+      .executeTakeFirstOrThrow()
+
+    await trx
+      .insertInto('order_items')
+      .values(
+        items.map((it) => ({
+          order_id: order.id,
+          product_id: it.productId,
+          name_snapshot: it.name,
+          price_cents_snapshot: it.price_cents,
+          quantity: it.quantity,
+        })),
+      )
+      .execute()
+
+    await trx.deleteFrom('cart_items').where('cart_id', '=', cart.id).execute()
+    return order
+  })
+}
+
+export async function listOrdersForUser(userId: number): Promise<OrderListItem[]> {
+  const rows = await kdb
+    .selectFrom('orders as o')
+    .leftJoin('order_items as oi', 'oi.order_id', 'o.id')
+    .select([
+      'o.id as id',
+      'o.total_cents as total_cents',
+      'o.created_at as created_at',
+      sql<number>`COALESCE(SUM(oi.quantity), 0)`.as('item_count'),
+    ])
+    .where('o.user_id', '=', userId)
+    .groupBy('o.id')
+    .orderBy('o.created_at', 'desc')
+    .execute()
+  return rows
+}
+
+export async function getOrderForUser(
+  userId: number,
+  orderId: number,
+): Promise<{ order: OrderRow; items: OrderItemSnapshot[] } | null> {
+  const order = await kdb
+    .selectFrom('orders')
+    .selectAll()
+    .where('id', '=', orderId)
+    .where('user_id', '=', userId)
+    .executeTakeFirst()
+  if (!order) return null
+  const items = await kdb
+    .selectFrom('order_items')
+    .select(['id', 'product_id', 'name_snapshot', 'price_cents_snapshot', 'quantity'])
+    .where('order_id', '=', orderId)
+    .orderBy('id')
+    .execute()
+  return { order: order as OrderRow, items }
 }
