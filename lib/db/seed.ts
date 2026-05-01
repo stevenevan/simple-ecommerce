@@ -35,6 +35,7 @@ export function runSeed(): void {
 
   const db = getDb()
 
+  // Raw better-sqlite3 by design — one-shot CLI; no need for Kysely indirection here.
   const upsertProduct = db.prepare(`
     INSERT INTO products (slug, name, description, price_cents, image_url, category, stock)
     VALUES (@slug, @name, @description, @price_cents, @image_url, @category, @stock)

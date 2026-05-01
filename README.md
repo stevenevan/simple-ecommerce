@@ -21,7 +21,6 @@ bun dev
 - Cart-drawer prices are advisory; the order is charged at the price at submit time (snapshotted into `order_items.price_cents_snapshot`).
 - No email verification, no password reset.
 - `/orders` is unpaginated (full history per request).
-- DB layer is hybrid: Wk 7+8 helpers use Kysely; Wk 1–6 helpers still use raw `better-sqlite3` prepared statements. Backfill is a future follow-up.
 - `e2e/` directory exists but is unused in this milestone.
 
 

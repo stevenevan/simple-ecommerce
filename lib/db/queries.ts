@@ -1,7 +1,5 @@
 // Single SQL boundary for app routes + server components.
-// Wk1-6 helpers stay sync (raw better-sqlite3 prepares).
-// Wk7+8 helpers are async (Kysely via lib/db/kysely.ts).
-// Backfill of Wk1-6 to Kysely is a future follow-up.
+// All helpers async (Kysely via lib/db/kysely.ts).
 
 import { sql, type SqlBool } from 'kysely'
 import { kdb } from './kysely.ts'

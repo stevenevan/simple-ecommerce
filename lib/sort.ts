@@ -1,5 +1,5 @@
 // Client-side sort allowlist — URL/UI domain.
-// Server-side counterpart is SORT_COLUMNS in lib/db/queries.ts (SQL ORDER BY allowlist).
+// Server-side ORDER BY allowlist is the inline switch in listProducts (lib/db/queries.ts).
 // Keep arrays in sync; intentionally duplicated to keep better-sqlite3 out of the client bundle.
 export const CLIENT_SORT_KEYS = ['newest', 'price_asc', 'price_desc', 'name_asc'] as const
 export type ClientSortKey = (typeof CLIENT_SORT_KEYS)[number]
