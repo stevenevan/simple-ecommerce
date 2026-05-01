@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useOrders } from '@/lib/hooks/useOrders'
+import { useOrders } from './_hooks/useOrders'
 import { useMe } from '@/lib/hooks/useMe'
 import { formatCurrency } from '@/lib/format'
 

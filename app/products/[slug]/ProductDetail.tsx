@@ -1,8 +1,8 @@
 import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ProductImage } from '@/components/ProductImage'
-import { ProductSpecs } from '@/components/ProductSpecs'
-import { AddToCartButton } from '@/components/AddToCartButton'
+import { ProductImage } from './_components/ProductImage'
+import { ProductSpecs } from './_components/ProductSpecs'
+import { AddToCartButton } from './_components/AddToCartButton'
 import type { Product } from '@/lib/types'
 
 export function ProductDetail({ product }: { product: Product }) {

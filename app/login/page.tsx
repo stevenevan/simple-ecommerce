@@ -8,7 +8,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { useLogin } from '@/lib/hooks/useAuthMutations'
+import { useLogin } from './_hooks/useLogin'
 
 export default function LoginPage() {
   const router = useRouter()

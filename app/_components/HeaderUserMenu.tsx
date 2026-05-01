@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useMe } from '@/lib/hooks/useMe'
-import { useLogout } from '@/lib/hooks/useAuthMutations'
+import { useLogout } from '@/app/_hooks/useLogout'
 
 export function HeaderUserMenu() {
   const me = useMe()

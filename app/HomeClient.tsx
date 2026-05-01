@@ -1,6 +1,6 @@
 'use client'
 
-import { FilterBar } from '@/components/FilterBar'
+import { FilterBar } from './FilterBar'
 import { ProductGrid } from './ProductGrid'
 
 export function HomeClient() {

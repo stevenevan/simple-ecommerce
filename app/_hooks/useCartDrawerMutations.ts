@@ -1,5 +1,6 @@
 'use client'
 
+// Sibling cart mutation: app/products/[slug]/_hooks/useAddItem.ts
 // Load-bearing — every mutation toasts on success/error.
 //
 // Convention: mutations that edit existing rows by client-known id
@@ -11,9 +12,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { HTTPError } from 'ky'
 import { toast } from 'sonner'
 import { api } from '@/lib/api-client'
-import { CART_KEY, type CartResponse } from './useCart'
-import { friendlyOf } from './_friendlyErrors'
+import { CART_KEY, type CartResponse } from '@/lib/hooks/useCart'
+import { friendlyOf } from '@/lib/hooks/_friendlyErrors'
 
+// Mirrors parseCartError in app/products/[slug]/_hooks/useAddItem.ts; keep in sync.
 async function parseCartError(e: unknown): Promise<Error> {
   if (e instanceof HTTPError) {
     const body = await e.response.json<{ error?: string }>().catch(() => null)
@@ -24,26 +26,6 @@ async function parseCartError(e: unknown): Promise<Error> {
 
 function invalidateCart(qc: ReturnType<typeof useQueryClient>) {
   return qc.invalidateQueries({ queryKey: CART_KEY })
-}
-
-export function useAddItem() {
-  const qc = useQueryClient()
-  return useMutation({
-    // Not optimistic: cart_item.id is server-issued. Fabricating a temp id is
-    // brittle (de-dup, rollback, concurrent adds). Round-trip is acceptable here.
-    mutationFn: async (input: { productId: number; quantity: number }) => {
-      try {
-        return await api.post('cart/items', { json: input }).json<{ ok: true }>()
-      } catch (e) {
-        throw await parseCartError(e)
-      }
-    },
-    onSuccess: () => {
-      invalidateCart(qc)
-      toast.success('Added to cart')
-    },
-    onError: (err) => toast.error(friendlyOf(err.message)),
-  })
 }
 
 export function useUpdateQty() {

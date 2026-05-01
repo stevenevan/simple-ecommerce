@@ -8,7 +8,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { useRegister } from '@/lib/hooks/useAuthMutations'
+import { useRegister } from './_hooks/useRegister'
 
 export default function RegisterPage() {
   const router = useRouter()

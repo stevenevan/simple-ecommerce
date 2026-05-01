@@ -6,7 +6,7 @@ import { Minus, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useMe } from '@/lib/hooks/useMe'
-import { useAddItem } from '@/lib/hooks/useCartMutations'
+import { useAddItem } from '../_hooks/useAddItem'
 
 type Props = { productId: number; stock: number }
 

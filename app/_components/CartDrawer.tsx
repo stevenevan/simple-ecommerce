@@ -15,7 +15,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { useCart } from '@/lib/hooks/useCart'
-import { useUpdateQty, useRemoveItem } from '@/lib/hooks/useCartMutations'
+import { useUpdateQty, useRemoveItem } from '@/app/_hooks/useCartDrawerMutations'
 import { useMe } from '@/lib/hooks/useMe'
 import { formatCurrency } from '@/lib/format'
 import { safeProductImage } from '@/lib/image'

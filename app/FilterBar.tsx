@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
-import { useCategories } from '@/lib/hooks/useCategories'
+import { useCategories } from './_hooks/useCategories'
 import { isClientSortKey, type ClientSortKey } from '@/lib/sort'
 
 const SEARCH_DEBOUNCE_MS = 250

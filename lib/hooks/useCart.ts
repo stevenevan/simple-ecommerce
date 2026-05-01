@@ -12,6 +12,7 @@ import { useMe } from './useMe'
 
 export type CartResponse = { items: CartItemView[]; subtotalCents: number }
 
+// Public: cart query key — mutation hooks invalidate against this.
 export const CART_KEY = ['cart'] as const
 
 export function useCart() {
