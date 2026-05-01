@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { HeaderUserMenu } from './HeaderUserMenu'
+import { CartDrawer } from './CartDrawer'
 
 export default function Header() {
   return (
@@ -8,7 +9,8 @@ export default function Header() {
         <Link href="/" className="text-base font-semibold">
           Simple E-Commerce
         </Link>
-        <div data-slot="header-right">
+        <div data-slot="header-right" className="flex items-center gap-2">
+          <CartDrawer />
           <HeaderUserMenu />
         </div>
       </div>
