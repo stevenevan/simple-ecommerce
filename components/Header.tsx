@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { HeaderUserMenu } from './HeaderUserMenu'
 
 export default function Header() {
   return (
@@ -7,7 +8,9 @@ export default function Header() {
         <Link href="/" className="text-base font-semibold">
           Simple E-Commerce
         </Link>
-        <div data-slot="header-right" />
+        <div data-slot="header-right">
+          <HeaderUserMenu />
+        </div>
       </div>
     </header>
   )
