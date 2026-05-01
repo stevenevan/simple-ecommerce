@@ -11,6 +11,8 @@
     "start": "next start",
     "lint": "oxlint",
     "type:check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "db:migrate": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON lib/db/migrate.ts",
     "db:seed": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON lib/db/seed.ts",
     "db:reset": "rm -f data/app.db data/app.db-* && bun run db:migrate && bun run db:seed"
@@ -44,10 +46,12 @@
     "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@vitest/coverage-v8": "^4.1.5",
     "oxlint": "^1.62.0",
     "oxlint-tsgolint": "^0.22.1",
     "tailwindcss": "^4.2.4",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.5"
   },
   "ignoreScripts": [
     "sharp",
