@@ -5,6 +5,7 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -37,7 +38,9 @@ export function HeaderUserMenu() {
         {user.email}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Signed in as {user.name}</DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Signed in as {user.name}</DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => logout.mutate()}>Logout</DropdownMenuItem>
       </DropdownMenuContent>
