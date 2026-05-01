@@ -1,5 +1,15 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Auth secret
+
+Copy `.env.example` to `.env` and set `SESSION_SECRET` to ≥32 random chars before booting:
+
+```bash
+echo "SESSION_SECRET=$(openssl rand -base64 32)" > .env
+```
+
+Rotating `SESSION_SECRET` invalidates every existing session cookie (all users get logged out).
+
 ## Getting Started
 
 First, run the development server:

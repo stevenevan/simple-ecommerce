@@ -3,7 +3,7 @@
 // Do NOT add a generic runInTransaction helper until a real use case lands.
 
 import { getDb } from './index.ts'
-import type { Product } from '../types.ts'
+import type { Product, CartItemView } from '@/lib/types'
 
 export const SORT_COLUMNS = {
   price_asc:  'price_cents ASC',
@@ -65,4 +65,26 @@ export function getProductBySlug(slug: string): Product | null {
 
 export function listCategories(): string[] {
   return listCategoriesStmt().all().map((r) => r.category)
+}
+
+// Cart helpers — Wk7 fills SQL. Signatures locked here so route handlers
+// + types compile against the final shape now.
+export function getOrCreateCart(_userId: number): { id: number } {
+  throw new Error('Week 7')
+}
+
+export function listCartItems(_cartId: number): CartItemView[] {
+  throw new Error('Week 7')
+}
+
+export function upsertCartItem(_cartId: number, _productId: number, _qty: number): void {
+  throw new Error('Week 7')
+}
+
+export function updateCartItemQty(_itemId: number, _cartId: number, _qty: number): void {
+  throw new Error('Week 7')
+}
+
+export function removeCartItem(_itemId: number, _cartId: number): void {
+  throw new Error('Week 7')
 }

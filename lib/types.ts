@@ -21,3 +21,15 @@ export type ProductListQuery = {
   limit?: number
   offset?: number
 }
+
+export type CartItemView = {
+  id: number
+  productId: number
+  slug: string
+  name: string
+  image_url: string
+  price_cents: number
+  quantity: number
+  line_total_cents: number
+  stock: number
+}
