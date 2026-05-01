@@ -1,0 +1,182 @@
+[
+  {
+    "slug": "apparel-classic-tee-shirt",
+    "name": "Classic Cotton Tee Shirt",
+    "description": "Soft midweight cotton crew-neck. Pre-shrunk, runs true to size.",
+    "price_cents": 2400,
+    "image_url": "/seed-images/apparel-classic-tee-shirt.jpg",
+    "category": "apparel",
+    "stock": 42
+  },
+  {
+    "slug": "apparel-linen-shirt",
+    "name": "Linen Button-Up Shirt",
+    "description": "Breathable linen with horn buttons. Untucked length.",
+    "price_cents": 6800,
+    "image_url": "/seed-images/apparel-linen-shirt.jpg",
+    "category": "apparel",
+    "stock": 18
+  },
+  {
+    "slug": "apparel-wool-sweater",
+    "name": "Merino Crew Sweater",
+    "description": "Fine-gauge merino in heather charcoal. Mid-weight knit.",
+    "price_cents": 9900,
+    "image_url": "/seed-images/apparel-wool-sweater.jpg",
+    "category": "apparel",
+    "stock": 22
+  },
+  {
+    "slug": "apparel-denim-jacket",
+    "name": "Selvedge Denim Jacket",
+    "description": "14oz Japanese selvedge. Copper rivets, chain-stitched hem.",
+    "price_cents": 18900,
+    "image_url": "/seed-images/apparel-denim-jacket.jpg",
+    "category": "apparel",
+    "stock": 11
+  },
+  {
+    "slug": "accessories-leather-belt",
+    "name": "Bridle Leather Belt",
+    "description": "English bridle leather, solid brass buckle. Edges hand-burnished.",
+    "price_cents": 7200,
+    "image_url": "/seed-images/accessories-leather-belt.jpg",
+    "category": "accessories",
+    "stock": 30
+  },
+  {
+    "slug": "accessories-canvas-tote",
+    "name": "Heavy Canvas Tote",
+    "description": "16oz duck canvas, reinforced base, leather grab handles.",
+    "price_cents": 4900,
+    "image_url": "/seed-images/accessories-canvas-tote.jpg",
+    "category": "accessories",
+    "stock": 35
+  },
+  {
+    "slug": "accessories-wool-beanie",
+    "name": "Ribbed Wool Beanie",
+    "description": "Cuffed ribbed-knit lambswool. One size, slight stretch.",
+    "price_cents": 2600,
+    "image_url": "/seed-images/accessories-wool-beanie.jpg",
+    "category": "accessories",
+    "stock": 50
+  },
+  {
+    "slug": "accessories-leather-wallet",
+    "name": "Bifold Leather Wallet",
+    "description": "Vegetable-tanned leather, 8 card slots. Patinas with use.",
+    "price_cents": 8900,
+    "image_url": "/seed-images/accessories-leather-wallet.jpg",
+    "category": "accessories",
+    "stock": 24
+  },
+  {
+    "slug": "home-ceramic-mug",
+    "name": "Stoneware Coffee Mug",
+    "description": "Hand-thrown stoneware, 12oz. Matte ivory glaze.",
+    "price_cents": 1800,
+    "image_url": "/seed-images/home-ceramic-mug.jpg",
+    "category": "home",
+    "stock": 48
+  },
+  {
+    "slug": "home-linen-throw",
+    "name": "Stonewashed Linen Throw",
+    "description": "Belgian linen throw, 50x70in. Generous garment-washed drape.",
+    "price_cents": 11900,
+    "image_url": "/seed-images/home-linen-throw.jpg",
+    "category": "home",
+    "stock": 14
+  },
+  {
+    "slug": "home-cast-iron-skillet",
+    "name": "12-inch Cast Iron Skillet",
+    "description": "Pre-seasoned cast iron, smooth machined surface. Made in USA.",
+    "price_cents": 6400,
+    "image_url": "/seed-images/home-cast-iron-skillet.jpg",
+    "category": "home",
+    "stock": 27
+  },
+  {
+    "slug": "home-walnut-cutting-board",
+    "name": "Walnut End-Grain Cutting Board",
+    "description": "Edge-glued American black walnut, mineral-oil finish. 14x10in.",
+    "price_cents": 8400,
+    "image_url": "/seed-images/home-walnut-cutting-board.jpg",
+    "category": "home",
+    "stock": 16
+  },
+  {
+    "slug": "books-on-writing-well",
+    "name": "On Writing Well",
+    "description": "William Zinsser's classic guide to nonfiction. Paperback, 30th anniv.",
+    "price_cents": 1700,
+    "image_url": "/seed-images/books-on-writing-well.jpg",
+    "category": "books",
+    "stock": 40
+  },
+  {
+    "slug": "books-pragmatic-programmer",
+    "name": "The Pragmatic Programmer",
+    "description": "20th anniversary edition. Hunt & Thomas, hardcover.",
+    "price_cents": 3800,
+    "image_url": "/seed-images/books-pragmatic-programmer.jpg",
+    "category": "books",
+    "stock": 33
+  },
+  {
+    "slug": "books-design-of-everyday-things",
+    "name": "The Design of Everyday Things",
+    "description": "Don Norman, revised edition. Paperback, 368 pages.",
+    "price_cents": 2200,
+    "image_url": "/seed-images/books-design-of-everyday-things.jpg",
+    "category": "books",
+    "stock": 28
+  },
+  {
+    "slug": "books-kitchen-confidential",
+    "name": "Kitchen Confidential",
+    "description": "Anthony Bourdain's kitchen memoir. Paperback reissue.",
+    "price_cents": 1900,
+    "image_url": "/seed-images/books-kitchen-confidential.jpg",
+    "category": "books",
+    "stock": 36
+  },
+  {
+    "slug": "electronics-mechanical-keyboard",
+    "name": "Mechanical Keyboard 65%",
+    "description": "Hot-swappable 65% layout, PBT keycaps, USB-C, ANSI.",
+    "price_cents": 14900,
+    "image_url": "/seed-images/electronics-mechanical-keyboard.jpg",
+    "category": "electronics",
+    "stock": 19
+  },
+  {
+    "slug": "electronics-wireless-mouse",
+    "name": "Wireless Optical Mouse",
+    "description": "2.4 GHz + Bluetooth, 3 DPI presets, USB-C charge.",
+    "price_cents": 5900,
+    "image_url": "/seed-images/electronics-wireless-mouse.jpg",
+    "category": "electronics",
+    "stock": 31
+  },
+  {
+    "slug": "electronics-usb-c-hub",
+    "name": "7-in-1 USB-C Hub",
+    "description": "HDMI 4K60, 100W PD pass-through, SD/microSD, 2x USB-A.",
+    "price_cents": 4400,
+    "image_url": "/seed-images/electronics-usb-c-hub.jpg",
+    "category": "electronics",
+    "stock": 38
+  },
+  {
+    "slug": "electronics-desk-lamp",
+    "name": "Adjustable LED Desk Lamp",
+    "description": "Stepless dimming, 2700-6500K, USB-C charge port.",
+    "price_cents": 7800,
+    "image_url": "/seed-images/electronics-desk-lamp.jpg",
+    "category": "electronics",
+    "stock": 23
+  }
+]
