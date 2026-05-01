@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart, Minus, Plus, Trash2 } from 'lucide-react'
@@ -25,6 +26,7 @@ export function CartDrawer() {
   const updateQty = useUpdateQty()
   const removeItem = useRemoveItem()
   const router = useRouter()
+  const [open, setOpen] = useState(false)
 
   if (!me?.user) {
     return (
@@ -44,7 +46,7 @@ export function CartDrawer() {
   const count = items.length
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         render={<Button variant="ghost" size="icon" aria-label="Open cart" />}
       >
@@ -148,7 +150,13 @@ export function CartDrawer() {
               {formatCurrency(cart.data?.subtotalCents ?? 0)}
             </span>
           </div>
-          <Button disabled={items.length === 0} onClick={() => router.push('/checkout')}>
+          <Button
+            disabled={items.length === 0}
+            onClick={() => {
+              setOpen(false)
+              router.push('/checkout')
+            }}
+          >
             Checkout
           </Button>
         </SheetFooter>
