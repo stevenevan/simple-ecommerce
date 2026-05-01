@@ -19,11 +19,13 @@ End deliverable of *this* planning task: 8 markdown files in `docs/sprints/week-
 | Password hash | **`bcryptjs`** (pure-JS, no native build) | pairs with bcryptjs — works under Turbopack |
 | Toast | **`sonner`** (shadcn-recommended) | user choice |
 | Seed data | **Local JSON** (`data/seed/products.json`, ~20 SKUs) | user choice |
+| Form state | **TanStack Form v1** | pairs naturally with TanStack Query already in stack; Standard-Schema-compatible |
+| Validation | **zod v4** | shared client + server schemas; top-level `z.email()` / `z.flattenError()` / unified `error:` parameter |
 | Tests | **Manual QA per sprint** (no formal harness) | user choice |
 
 ### Constraints (do not violate)
 
-- No third-party libs in checkout (form validation hand-rolled).
+- Forms use `zod` schemas (`lib/schemas/*`) + `@tanstack/react-form` + shadcn `Field` primitives. Same schema validates on the client (form `validators`) and on the server (route-handler `safeParse`). Rule introduced in Week 4.5.
 - iron-session is the only auth library (pairs with bcryptjs for hashing).
 - DB file `data/app.db` — gitignored; created by migration script.
 - Read the relevant `node_modules/next/dist/docs/01-app/**` page before writing any Next-specific code (Route Handlers, Server Components, Forms, Authentication).
@@ -120,7 +122,8 @@ lib/
   session.ts         iron-session helpers
   auth.ts            password hash/verify, ensureSession
   hooks/             useProducts, useProduct, useCart, useMe, useMutations
-  validators.ts      hand-rolled email/password/checkout form validators
+  schemas/auth.ts    zod schemas: loginSchema, registerSchema, sessionUserSchema (Wk 4.5)
+  schemas/checkout.ts zod schemas: checkoutShippingSchema (Wk 4.5)
   format.ts          currency, dates
   types.ts           Product, CartItem, Order, SessionUser, …
 data/
@@ -136,10 +139,11 @@ data/
 | 2 | DB layer + catalog API | migrate + seed scripts, `GET /api/products(?category&sort&q)`, `/api/products/[slug]` |
 | 3 | Homepage product grid | shadcn cards + skeleton, useProducts hook, currency format |
 | 4 | Filter / sort / search | FilterBar, URL-synced search params, debounced text, categories endpoint |
+| 4.5 | Forms foundation | zod schemas + TanStack Form + shadcn Field; retro-edits to Wk 6/8 plans |
 | 5 | Product detail page | Server-component detail (direct DB), AddToCart island, loading/error/not-found |
 | 6 | Authentication | iron-session, bcryptjs, register/login/logout/me, demo account, header user menu |
 | 7 | Cart | cart endpoints (auth-gated), CartDrawer (sheet), qty controls, sonner toasts |
-| 8 | Checkout & orders | POST /api/orders (txn snapshots), checkout form (hand-rolled validation), success page, /orders list |
+| 8 | Checkout & orders | POST /api/orders (txn snapshots), checkout form (zod + TanStack Form), success page, /orders list |
 
 Each sprint file follows the same template:
 
@@ -255,13 +259,13 @@ Each sprint file follows the same template:
   ```
   **`cookies()` is async in Next 16 — always `await` it.**
 - `lib/auth.ts`: `hashPassword`, `verifyPassword` (bcryptjs cost 10), `ensureSession()` helper that calls `getSession()` and throws `Response.json({error:'unauthorized'},{status:401})` if no `session.user`.
-- `lib/validators.ts`: `validateEmail`, `validatePassword` (min 8, ≥1 letter, ≥1 digit) — extended (not recreated) in Week 8.
+- Validation rules live in `lib/schemas/auth.ts` (zod schemas; min 8, ≥1 letter, ≥1 digit) and `lib/schemas/checkout.ts` — both authored in Wk 4.5. No `lib/validators.ts` file.
 - **Stub-only cart query helpers added to `lib/db/queries.ts`** (signatures with `throw new Error('Week 7')` body): `getOrCreateCart`, `listCartItems`, `upsertCartItem`, `updateCartItemQty`, `removeCartItem`. Lets Week 7 fill in bodies without restructuring the file.
 - `app/api/auth/register/route.ts`: POST — validate → check email uniqueness → hash → insert user → `session.user = {...}; await session.save()` → 200.
 - `app/api/auth/login/route.ts`: POST — fetch user → `verifyPassword` → save session → 200; generic "invalid credentials" on any failure (no leak about email vs password).
 - `app/api/auth/logout/route.ts`: POST — `await session.destroy()` → 200.
 - `app/api/auth/me/route.ts`: GET — returns `{ user: session.user ?? null }` (200, never 401).
-- `app/login/page.tsx`, `app/register/page.tsx`: client forms, `useMutation` against `/api/auth/*`, hand-rolled inline validation. **Login page renders the literal demo creds inline** (small muted text under the form): `demo@example.com` / `Demo1234!` — must match the seed in Wk 2 exactly.
+- `app/login/page.tsx`, `app/register/page.tsx`: client forms built with TanStack Form + `loginSchema` / `registerSchema` from `lib/schemas/auth.ts` + shadcn `Field` primitives. `useMutation` against `/api/auth/*`. **Login page renders the literal demo creds inline** (small muted text under the form): `demo@example.com` / `Demo1234!` — must match the seed in Wk 2 exactly.
 - `lib/hooks/useMe.ts`: `useQuery({ queryKey: ['me'], queryFn: ..., staleTime: 0 })`. **`staleTime: 0` overrides the global default** so post-mutation invalidations refetch immediately.
 - **Mutation cache hygiene** (close the stale-session window):
   - Login `onSuccess` → `queryClient.setQueryData(['me'], { user })`, `invalidateQueries({ queryKey: ['cart'] })`.
@@ -287,8 +291,8 @@ Each sprint file follows the same template:
 - **Transition**: cart is durable; Week 8 turns a cart into an order.
 
 ### Week 8 — Checkout & orders
-- **Dependencies (from prior weeks):** Wk 6 (`ensureSession`, `validators.ts`), Wk 7 (`getOrCreateCart`, `listCartItems`, plus the cart UI feeding into `/checkout`). Hard prereqs.
-- **Extend** existing `lib/validators.ts` (already created in Week 6): add `validateCheckoutForm({ name, address, city, zip })` — all required, zip pattern `/^\d{4,10}$/`.
+- **Dependencies (from prior weeks):** Wk 4.5 (`lib/schemas/auth.ts`, `lib/schemas/checkout.ts`), Wk 6 (`ensureSession`), Wk 7 (`getOrCreateCart`, `listCartItems`, plus the cart UI feeding into `/checkout`). Hard prereqs.
+- Validation lives in `lib/schemas/checkout.ts:checkoutShippingSchema` (zod, Wk 4.5). Server `safeParse`s the request body before any DB work; client form uses the same schema as TanStack Form `validators`.
 - `app/api/orders/route.ts`:
   - POST: in a single `db.transaction(...)`:
     1. Load cart items (with current product price + stock from products table).
@@ -322,6 +326,7 @@ Each sprint file follows the same template:
 - **Caching model = legacy route-segment-config** (because `cacheComponents` is OFF). Auth / cart / orders route handlers — `export const dynamic = 'force-dynamic'`. Product list route handler reads `searchParams` so it's already dynamic; the **server-component product detail page** sets `export const dynamic = 'force-dynamic'` explicitly. DO NOT use `'use cache'`, `cacheLife`, or `cacheTag` anywhere.
 - **No `middleware.ts` / `proxy.ts`** in any sprint.
 - **ky throws on 4xx/5xx** by config; every mutation wraps in try/catch, parses `error.response.json()` for `{error}`, re-throws `Error(message)`. TanStack `onError` shows `toast.error`.
+- **JSON error envelope (project-wide).** Every JSON error response uses the shape `{ error: string, fields?: Record<string, string[]> }`. `error` is a stable code (`invalid_form`, `invalid_credentials`, `cart_empty`, `insufficient_stock`, `payload_too_large`, `unauthorized`, …). `fields` is present only on `invalid_form` 400s and is the output of `z.flattenError(parsed.error).fieldErrors` — zod v4's stock top-level flattener (the non-deprecated replacement for v3's instance `.flatten()`). Clients may consume `fields` for per-field UI; clients that ignore it still get a usable `error` message.
 
 ### Layer & module rules (one-way; non-negotiable)
 
@@ -373,7 +378,7 @@ Each follows the template in §5 and elaborates the matching subsection of §6.
 - [x] Sort allowlist made concrete (§6 Wk 2).
 - [x] Cart-helper stubs moved to Wk 6 to thin Wk 7 (§6 Wk 6, Wk 7).
 - [x] `lib/db/queries.ts` introduced in Wk 2 — no mid-stream abstraction in Wk 5.
-- [x] `validators.ts` extended (not recreated) in Wk 8.
+- [x] `lib/schemas/auth.ts` and `lib/schemas/checkout.ts` authored in Wk 4.5; consumed in Wk 6 and Wk 8 (no `lib/validators.ts`).
 - [x] `formatCurrency(cents)` no params.
 - [x] `e2e/` left untouched; mentioned only in Wk 8 README.
 - [x] Cart cross-browser QA reframed to "second profile on same machine".
