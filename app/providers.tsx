@@ -1,9 +1,9 @@
-'use client'
+"use client";
 
-import { useState, type ReactNode } from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { Toaster } from 'sonner'
+import { useState, type ReactNode } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { Toaster } from "sonner";
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -13,15 +13,15 @@ export function Providers({ children }: { children: ReactNode }) {
           queries: { staleTime: 30_000, refetchOnWindowFocus: false },
         },
       }),
-  )
+  );
 
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      <Toaster richColors position="top-right" />
-      {process.env.NODE_ENV !== 'production' && (
+      <Toaster richColors position="bottom-right" />
+      {process.env.NODE_ENV !== "production" && (
         <ReactQueryDevtools initialIsOpen={false} />
       )}
     </QueryClientProvider>
-  )
+  );
 }
