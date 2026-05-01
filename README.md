@@ -24,6 +24,13 @@ bun dev
 - `e2e/` directory exists but is unused in this milestone.
 
 
+## Tests
+
+Playwright e2e + API tests cover critical money/crash paths (order creation,
+stock race, cart mutations, auth, IDOR). Run `bun run test:e2e:install` once to
+fetch Chromium, then `bun run test:e2e`. Tests use a separate `data/test.db`
+and a pinned test-only `SESSION_SECRET`; the dev server boots automatically.
+
 ## Auth secret
 
 Copy `.env.example` to `.env` and set `SESSION_SECRET` to ≥32 random chars before booting:

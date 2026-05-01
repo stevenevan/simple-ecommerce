@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+/playwright-report
+/test-results
+/.playwright
 
 # next.js
 /.next/
@@ -45,6 +48,10 @@ next-env.d.ts
 /data/app.db-shm
 /data/app.db-wal
 /data/app.db*
+/data/test.db
+/data/test.db-shm
+/data/test.db-wal
+/data/test.db*
 
 # but keep seed assets committed (Wk2)
 !/data/seed/
