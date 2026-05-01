@@ -1,8 +1,11 @@
-// Single read-side SQL boundary for app routes + server components.
-// Wk7/8 will add transaction-wrapped composites here (e.g. placeOrder).
-// Do NOT add a generic runInTransaction helper until a real use case lands.
+// Single SQL boundary for app routes + server components.
+// Wk1-6 helpers stay sync (raw better-sqlite3 prepares).
+// Wk7+8 helpers are async (Kysely via lib/db/kysely.ts).
+// Backfill of Wk1-6 to Kysely is a future follow-up.
 
+import { sql } from 'kysely'
 import { getDb } from './index.ts'
+import { kdb } from './kysely.ts'
 import type { Product, CartItemView } from '@/lib/types'
 
 export const SORT_COLUMNS = {
@@ -92,24 +95,118 @@ export function insertUser(email: string, passwordHash: string, name: string): {
   return { id: Number(info.lastInsertRowid) }
 }
 
-// Cart helpers — Wk7 fills SQL. Signatures locked here so route handlers
-// + types compile against the final shape now.
-export function getOrCreateCart(_userId: number): { id: number } {
-  throw new Error('Week 7')
+// Cart helpers — async (Kysely). Wk6 stubs were sync placeholders;
+// final shapes are Promise<T> per plan D1 (extended).
+
+export async function getOrCreateCart(userId: number): Promise<{ id: number }> {
+  const row = await kdb
+    .selectFrom('carts')
+    .select('id')
+    .where('user_id', '=', userId)
+    .executeTakeFirst()
+  if (row) return row
+  return kdb
+    .insertInto('carts')
+    .values({ user_id: userId })
+    .returning('id')
+    .executeTakeFirstOrThrow()
 }
 
-export function listCartItems(_cartId: number): CartItemView[] {
-  throw new Error('Week 7')
+// Pure read. Reused inside createOrderForUser's transaction (Wk8); do not
+// add side effects.
+export async function listCartItems(cartId: number): Promise<CartItemView[]> {
+  return kdb
+    .selectFrom('cart_items as ci')
+    .innerJoin('products as p', 'p.id', 'ci.product_id')
+    .select([
+      'ci.id as id',
+      'ci.product_id as productId',
+      'ci.quantity as quantity',
+      'p.name as name',
+      'p.price_cents as price_cents',
+      'p.image_url as image_url',
+      'p.stock as stock',
+      'p.slug as slug',
+      sql<number>`(p.price_cents * ci.quantity)`.as('line_total_cents'),
+    ])
+    .where('ci.cart_id', '=', cartId)
+    .orderBy('ci.id')
+    .execute()
 }
 
-export function upsertCartItem(_cartId: number, _productId: number, _qty: number): void {
-  throw new Error('Week 7')
+export async function upsertCartItem(
+  cartId: number,
+  productId: number,
+  qty: number,
+): Promise<void> {
+  await kdb
+    .insertInto('cart_items')
+    .values({ cart_id: cartId, product_id: productId, quantity: qty })
+    .onConflict((oc) =>
+      oc.columns(['cart_id', 'product_id']).doUpdateSet({
+        quantity: (eb) => eb('cart_items.quantity', '+', eb.ref('excluded.quantity')),
+      }),
+    )
+    .execute()
 }
 
-export function updateCartItemQty(_itemId: number, _cartId: number, _qty: number): void {
-  throw new Error('Week 7')
+export async function updateCartItemQty(
+  itemId: number,
+  cartId: number,
+  qty: number,
+): Promise<number> {
+  if (qty <= 0) throw new Error('invalid_quantity')
+  const r = await kdb
+    .updateTable('cart_items')
+    .set({ quantity: qty })
+    .where('id', '=', itemId)
+    .where('cart_id', '=', cartId)
+    .executeTakeFirst()
+  return Number(r.numUpdatedRows)
 }
 
-export function removeCartItem(_itemId: number, _cartId: number): void {
-  throw new Error('Week 7')
+export async function removeCartItem(itemId: number, cartId: number): Promise<number> {
+  const r = await kdb
+    .deleteFrom('cart_items')
+    .where('id', '=', itemId)
+    .where('cart_id', '=', cartId)
+    .executeTakeFirst()
+  return Number(r.numDeletedRows)
+}
+
+export async function getProductForCart(
+  productId: number,
+): Promise<Pick<Product, 'id' | 'price_cents' | 'stock'> | null> {
+  const row = await kdb
+    .selectFrom('products')
+    .select(['id', 'price_cents', 'stock'])
+    .where('id', '=', productId)
+    .executeTakeFirst()
+  return row ?? null
+}
+
+export async function getCartLineQuantity(
+  cartId: number,
+  productId: number,
+): Promise<number> {
+  const row = await kdb
+    .selectFrom('cart_items')
+    .select('quantity')
+    .where('cart_id', '=', cartId)
+    .where('product_id', '=', productId)
+    .executeTakeFirst()
+  return row?.quantity ?? 0
+}
+
+export async function getCartItemOwnership(
+  itemId: number,
+  cartId: number,
+): Promise<number | null> {
+  const row = await kdb
+    .selectFrom('cart_items')
+    .select('product_id')
+    .where('id', '=', itemId)
+    .where('cart_id', '=', cartId)
+    .executeTakeFirst()
+  return row?.product_id ?? null
 }
