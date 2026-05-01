@@ -15,7 +15,7 @@ import { isClientSortKey, type ClientSortKey } from '@/lib/sort'
 
 const SEARCH_DEBOUNCE_MS = 250
 const SEARCH_MAX_LEN = 100
-const ALL_VALUE = '__all__'
+const ALL_VALUE = 'all'
 
 const SORT_OPTIONS: { value: ClientSortKey; label: string }[] = [
   { value: 'newest',     label: 'Newest' },
