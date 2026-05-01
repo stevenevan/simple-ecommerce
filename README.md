@@ -1,5 +1,30 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Hand-off
+
+Demo creds: `demo@example.com` / `Demo1234!`.
+
+Prereq: **Node 24** (`.nvmrc` provided; `nvm use` if available).
+
+```bash
+node --version          # v24.x.x
+bun install
+cp .env.example .env    # then set SESSION_SECRET (32+ chars)
+bun run db:reset
+bun dev
+```
+
+### Known limitations
+- Single currency (USD).
+- No real payment integration; `orders.status` defaults to `'confirmed'`.
+- Stock race protection is a single-row `UPDATE … WHERE stock >= ?` inside a transaction (no two-phase reservation).
+- Cart-drawer prices are advisory; the order is charged at the price at submit time (snapshotted into `order_items.price_cents_snapshot`).
+- No email verification, no password reset.
+- `/orders` is unpaginated (full history per request).
+- DB layer is hybrid: Wk 7+8 helpers use Kysely; Wk 1–6 helpers still use raw `better-sqlite3` prepared statements. Backfill is a future follow-up.
+- `e2e/` directory exists but is unused in this milestone.
+
+
 ## Auth secret
 
 Copy `.env.example` to `.env` and set `SESSION_SECRET` to ≥32 random chars before booting:

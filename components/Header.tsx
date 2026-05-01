@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { HeaderUserMenu } from './HeaderUserMenu'
 import { CartDrawer } from './CartDrawer'
+import { HeaderOrdersLink } from './HeaderOrdersLink'
 
 export default function Header() {
   return (
@@ -11,6 +12,7 @@ export default function Header() {
         </Link>
         <div data-slot="header-right" className="flex items-center gap-2">
           <CartDrawer />
+          <HeaderOrdersLink />
           <HeaderUserMenu />
         </div>
       </div>
