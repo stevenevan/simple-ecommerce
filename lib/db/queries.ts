@@ -67,6 +67,31 @@ export function listCategories(): string[] {
   return listCategoriesStmt().all().map((r) => r.category)
 }
 
+export type UserRow = {
+  id: number
+  email: string
+  password_hash: string
+  name: string
+  created_at: string
+}
+
+const getUserByEmailStmt = () => getDb().prepare<[string], UserRow>(
+  'SELECT * FROM users WHERE email = ? LIMIT 1',
+)
+
+const insertUserStmt = () => getDb().prepare<[string, string, string]>(
+  'INSERT INTO users (email, password_hash, name) VALUES (?, ?, ?)',
+)
+
+export function getUserByEmail(email: string): UserRow | null {
+  return getUserByEmailStmt().get(email) ?? null
+}
+
+export function insertUser(email: string, passwordHash: string, name: string): { id: number } {
+  const info = insertUserStmt().run(email, passwordHash, name)
+  return { id: Number(info.lastInsertRowid) }
+}
+
 // Cart helpers — Wk7 fills SQL. Signatures locked here so route handlers
 // + types compile against the final shape now.
 export function getOrCreateCart(_userId: number): { id: number } {
