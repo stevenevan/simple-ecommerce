@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params
-  const product = getProductBySlug(slug)
+  const product = await getProductBySlug(slug)
   if (!product) {
     return Response.json({ error: 'not_found' }, { status: 404, headers: NO_STORE })
   }

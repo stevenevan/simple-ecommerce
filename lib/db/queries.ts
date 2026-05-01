@@ -3,8 +3,7 @@
 // Wk7+8 helpers are async (Kysely via lib/db/kysely.ts).
 // Backfill of Wk1-6 to Kysely is a future follow-up.
 
-import { sql } from 'kysely'
-import { getDb } from './index.ts'
+import { sql, type SqlBool } from 'kysely'
 import { kdb } from './kysely.ts'
 import type {
   Product,
@@ -15,22 +14,7 @@ import type {
 } from '@/lib/types'
 import type { CheckoutShippingInput } from '@/lib/schemas/checkout'
 
-export const SORT_COLUMNS = {
-  price_asc:  'price_cents ASC',
-  price_desc: 'price_cents DESC',
-  name_asc:   'name COLLATE NOCASE ASC',
-  newest:     'created_at DESC',
-} as const
-
-export type SortKey = keyof typeof SORT_COLUMNS
-
-const getProductBySlugStmt = () => getDb().prepare<[string], Product>(
-  'SELECT * FROM products WHERE slug = ? LIMIT 1',
-)
-
-const listCategoriesStmt = () => getDb().prepare<[], { category: string }>(
-  'SELECT DISTINCT category FROM products ORDER BY category',
-)
+export type SortKey = 'price_asc' | 'price_desc' | 'name_asc' | 'newest'
 
 export type ListProductsFilter = {
   category?: string
@@ -40,41 +24,63 @@ export type ListProductsFilter = {
   offset: number
 }
 
-export function listProducts(filter: ListProductsFilter): Product[] {
-  const orderBy = SORT_COLUMNS[filter.sort as SortKey] ?? SORT_COLUMNS.newest
-  const where: string[] = []
-  const params: unknown[] = []
+export async function listProducts(filter: ListProductsFilter): Promise<Product[]> {
+  const sortKey: SortKey =
+    filter.sort === 'price_asc' ||
+    filter.sort === 'price_desc' ||
+    filter.sort === 'name_asc' ||
+    filter.sort === 'newest'
+      ? filter.sort
+      : 'newest'
 
-  if (filter.category) {
-    where.push('category = ?')
-    params.push(filter.category)
-  }
+  let qb = kdb.selectFrom('products').selectAll()
+
+  if (filter.category) qb = qb.where('category', '=', filter.category)
+
   if (filter.q) {
     const escaped = filter.q
       .replaceAll('\\', '\\\\')
       .replaceAll('%', '\\%')
       .replaceAll('_', '\\_')
-    where.push("name LIKE ? ESCAPE '\\'")
-    params.push(`%${escaped}%`)
+    const pattern = `%${escaped}%`
+    qb = qb.where(sql<SqlBool>`name LIKE ${pattern} ESCAPE '\\'`)
   }
 
-  const sql = `
-    SELECT * FROM products
-    ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-    ORDER BY ${orderBy}
-    LIMIT ? OFFSET ?
-  `
-  params.push(filter.limit, filter.offset)
+  switch (sortKey) {
+    case 'price_asc':
+      qb = qb.orderBy('price_cents', 'asc')
+      break
+    case 'price_desc':
+      qb = qb.orderBy('price_cents', 'desc')
+      break
+    case 'name_asc':
+      qb = qb.orderBy(sql`name COLLATE NOCASE`, 'asc')
+      break
+    case 'newest':
+      qb = qb.orderBy('created_at', 'desc')
+      break
+  }
 
-  return getDb().prepare(sql).all(...params) as Product[]
+  return qb.limit(filter.limit).offset(filter.offset).execute()
 }
 
-export function getProductBySlug(slug: string): Product | null {
-  return getProductBySlugStmt().get(slug) ?? null
+export async function getProductBySlug(slug: string): Promise<Product | null> {
+  const row = await kdb
+    .selectFrom('products')
+    .selectAll()
+    .where('slug', '=', slug)
+    .executeTakeFirst()
+  return row ?? null
 }
 
-export function listCategories(): string[] {
-  return listCategoriesStmt().all().map((r) => r.category)
+export async function listCategories(): Promise<string[]> {
+  const rows = await kdb
+    .selectFrom('products')
+    .select('category')
+    .distinct()
+    .orderBy('category')
+    .execute()
+  return rows.map((r) => r.category)
 }
 
 export type UserRow = {
@@ -85,21 +91,25 @@ export type UserRow = {
   created_at: string
 }
 
-const getUserByEmailStmt = () => getDb().prepare<[string], UserRow>(
-  'SELECT * FROM users WHERE email = ? LIMIT 1',
-)
-
-const insertUserStmt = () => getDb().prepare<[string, string, string]>(
-  'INSERT INTO users (email, password_hash, name) VALUES (?, ?, ?)',
-)
-
-export function getUserByEmail(email: string): UserRow | null {
-  return getUserByEmailStmt().get(email) ?? null
+export async function getUserByEmail(email: string): Promise<UserRow | null> {
+  const row = await kdb
+    .selectFrom('users')
+    .selectAll()
+    .where('email', '=', email)
+    .executeTakeFirst()
+  return row ?? null
 }
 
-export function insertUser(email: string, passwordHash: string, name: string): { id: number } {
-  const info = insertUserStmt().run(email, passwordHash, name)
-  return { id: Number(info.lastInsertRowid) }
+export async function insertUser(
+  email: string,
+  passwordHash: string,
+  name: string,
+): Promise<{ id: number }> {
+  return kdb
+    .insertInto('users')
+    .values({ email, password_hash: passwordHash, name })
+    .returning('id')
+    .executeTakeFirstOrThrow()
 }
 
 // Cart helpers — async (Kysely). Wk6 stubs were sync placeholders;

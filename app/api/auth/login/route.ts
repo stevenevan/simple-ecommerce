@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
   const { email, password } = parsed.data
 
-  const user = getUserByEmail(email)
+  const user = await getUserByEmail(email)
   const hash = user?.password_hash ?? DUMMY_HASH
   const ok = await bcrypt.compare(password, hash)
   if (!user || !ok) {

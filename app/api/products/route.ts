@@ -22,6 +22,6 @@ export async function GET(request: NextRequest) {
   const sort = sp.get('sort') || undefined
   const q = sp.get('q') || undefined
 
-  const rows = listProducts({ category, sort, q, limit, offset })
+  const rows = await listProducts({ category, sort, q, limit, offset })
   return Response.json(rows, { headers: NO_STORE })
 }

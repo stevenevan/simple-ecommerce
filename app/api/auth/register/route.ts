@@ -34,11 +34,11 @@ export async function POST(req: NextRequest) {
   // Hash BEFORE branch decision — duplicate-path wall-clock matches success path.
   const passwordHash = await hashPassword(password)
 
-  if (getUserByEmail(email)) {
+  if (await getUserByEmail(email)) {
     return invalidCredentials()
   }
 
-  const { id } = insertUser(email, passwordHash, name)
+  const { id } = await insertUser(email, passwordHash, name)
   const session = await getSession()
   session.user = { id, email, name }
   await session.save()
