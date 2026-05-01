@@ -118,6 +118,27 @@
       }
     },
     {
+      "files": [
+        "app/api/**/*.{ts,tsx}",
+        "lib/db/**/*.{ts,tsx}",
+        "lib/auth.ts",
+        "lib/session.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/lib/api-client", "**/lib/api-client"],
+                "message": "lib/api-client is client-only — server code must call lib/db/queries directly (PLAN.md §7)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
       "rules": {
         "constructor-super": "off",

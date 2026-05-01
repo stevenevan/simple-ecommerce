@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local sqlite (gitignored — see Wk2 db:reset)
+/data/app.db
+/data/app.db-shm
+/data/app.db-wal
+/data/app.db*
+
+# but keep seed assets committed (Wk2)
+!/data/seed/
+
+# env example must always be committable (Wk6)
+!.env.example
