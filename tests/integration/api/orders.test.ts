@@ -71,7 +71,10 @@ describe('POST /api/orders', () => {
 
   it('400 cart_empty when no cart at all', async () => {
     await authedWithCart()
-    const res = await ordersPOST(makeJsonRequest('/api/orders', { method: 'POST', body: SHIPPING }))
+    const res = await ordersPOST(makeJsonRequest('/api/orders', {
+      method: 'POST',
+      body: { ...SHIPPING, selectedItemIds: [] },
+    }))
     expect(res.status).toBe(400)
     const json = (await res.json()) as { error: string }
     expect(json.error).toBe('cart_empty')
@@ -80,7 +83,10 @@ describe('POST /api/orders', () => {
   it('400 cart_empty when cart exists but has no items', async () => {
     const u = await authedWithCart()
     await seedCart(u.id)
-    const res = await ordersPOST(makeJsonRequest('/api/orders', { method: 'POST', body: SHIPPING }))
+    const res = await ordersPOST(makeJsonRequest('/api/orders', {
+      method: 'POST',
+      body: { ...SHIPPING, selectedItemIds: [] },
+    }))
     expect(res.status).toBe(400)
     const json = (await res.json()) as { error: string }
     expect(json.error).toBe('cart_empty')
@@ -90,8 +96,11 @@ describe('POST /api/orders', () => {
     const u = await authedWithCart()
     const p = await seedProduct({ stock: 1 })
     const cart = await seedCart(u.id)
-    await seedCartItem(cart.id, p.id, 5)
-    const res = await ordersPOST(makeJsonRequest('/api/orders', { method: 'POST', body: SHIPPING }))
+    const ci = await seedCartItem(cart.id, p.id, 5)
+    const res = await ordersPOST(makeJsonRequest('/api/orders', {
+      method: 'POST',
+      body: { ...SHIPPING, selectedItemIds: [ci.id] },
+    }))
     expect(res.status).toBe(409)
     const json = (await res.json()) as { error: string }
     expect(json.error).toBe('insufficient_stock')
@@ -101,9 +110,12 @@ describe('POST /api/orders', () => {
     const u = await authedWithCart()
     const p = await seedProduct({ price_cents: Number.MAX_SAFE_INTEGER, stock: 10 })
     const cart = await seedCart(u.id)
-    await seedCartItem(cart.id, p.id, 2)
+    const ci = await seedCartItem(cart.id, p.id, 2)
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    const res = await ordersPOST(makeJsonRequest('/api/orders', { method: 'POST', body: SHIPPING }))
+    const res = await ordersPOST(makeJsonRequest('/api/orders', {
+      method: 'POST',
+      body: { ...SHIPPING, selectedItemIds: [ci.id] },
+    }))
     expect(res.status).toBe(500)
     const json = (await res.json()) as { error: string }
     expect(json.error).toBe('server_error')
@@ -114,9 +126,12 @@ describe('POST /api/orders', () => {
     const u = await authedWithCart()
     const p = await seedProduct({ price_cents: 1000, stock: 5 })
     const cart = await seedCart(u.id)
-    await seedCartItem(cart.id, p.id, 2)
+    const ci = await seedCartItem(cart.id, p.id, 2)
 
-    const res = await ordersPOST(makeJsonRequest('/api/orders', { method: 'POST', body: SHIPPING }))
+    const res = await ordersPOST(makeJsonRequest('/api/orders', {
+      method: 'POST',
+      body: { ...SHIPPING, selectedItemIds: [ci.id] },
+    }))
     expect(res.status).toBe(200)
     expect(res.headers.get('cache-control')).toBe('no-store')
     const json = (await res.json()) as { id: number }
@@ -132,10 +147,16 @@ describe('POST /api/orders', () => {
     const u = await authedWithCart()
     const p = await seedProduct({ price_cents: 1000, stock: 5 })
     const cart = await seedCart(u.id)
-    await seedCartItem(cart.id, p.id, 2)
+    const ci = await seedCartItem(cart.id, p.id, 2)
     const res = await ordersPOST(makeJsonRequest('/api/orders', {
       method: 'POST',
-      body: { ...SHIPPING, total_cents: 0, status: 'shipped', user_id: 9999 },
+      body: {
+        ...SHIPPING,
+        selectedItemIds: [ci.id],
+        total_cents: 0,
+        status: 'shipped',
+        user_id: 9999,
+      },
     }))
     expect(res.status).toBe(200)
     const json = (await res.json()) as { id: number }

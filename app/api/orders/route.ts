@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { ensureSession } from '@/lib/auth'
-import { checkoutShippingSchema } from '@/lib/schemas/checkout'
+import { placeOrderSchema } from '@/lib/schemas/checkout'
 import { createOrderForUser, listOrdersForUser } from '@/lib/db/queries'
 
 export const dynamic = 'force-dynamic'
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const user = await ensureSession()
   if (user instanceof Response) return user
 
-  const parsed = checkoutShippingSchema.safeParse(await req.json().catch(() => null))
+  const parsed = placeOrderSchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) {
     return Response.json(
       { error: 'invalid_form', fields: z.flattenError(parsed.error).fieldErrors },
@@ -40,6 +40,9 @@ export async function POST(req: NextRequest) {
     const msg = e instanceof Error ? e.message : ''
     if (msg === 'cart_empty') {
       return Response.json({ error: 'cart_empty' }, { status: 400, headers: NO_STORE })
+    }
+    if (msg === 'nothing_selected') {
+      return Response.json({ error: 'nothing_selected' }, { status: 400, headers: NO_STORE })
     }
     if (msg === 'insufficient_stock') {
       return Response.json({ error: 'insufficient_stock' }, { status: 409, headers: NO_STORE })

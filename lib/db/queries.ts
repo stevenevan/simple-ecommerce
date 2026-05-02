@@ -10,7 +10,7 @@ import type {
   OrderItemSnapshot,
   OrderListItem,
 } from '@/lib/types'
-import type { CheckoutShippingInput } from '@/lib/schemas/checkout'
+import type { PlaceOrderInput } from '@/lib/schemas/checkout'
 
 export type SortKey = 'price_asc' | 'price_desc' | 'name_asc' | 'newest'
 
@@ -230,7 +230,7 @@ export async function getCartItemOwnership(
 
 export function createOrderForUser(
   userId: number,
-  shipping: CheckoutShippingInput,
+  input: PlaceOrderInput,
 ): Promise<{ id: number }> {
   return kdb.transaction().execute(async (trx) => {
     // R1 — inline cart lookup; never call getOrCreateCart() (uses kdb, not trx).
@@ -241,7 +241,7 @@ export function createOrderForUser(
       .executeTakeFirst()
     if (!cart) throw new Error('cart_empty')
 
-    const items = await trx
+    const allItems = await trx
       .selectFrom('cart_items as ci')
       .innerJoin('products as p', 'p.id', 'ci.product_id')
       .select([
@@ -254,7 +254,11 @@ export function createOrderForUser(
       .where('ci.cart_id', '=', cart.id)
       .orderBy('ci.id')
       .execute()
-    if (items.length === 0) throw new Error('cart_empty')
+    if (allItems.length === 0) throw new Error('cart_empty')
+
+    const selected = new Set(input.selectedItemIds)
+    const items = allItems.filter((it) => selected.has(it.id))
+    if (items.length === 0) throw new Error('nothing_selected')
 
     let totalCents = 0
     for (const it of items) {
@@ -274,10 +278,10 @@ export function createOrderForUser(
       .values({
         user_id: userId,
         total_cents: totalCents,
-        shipping_name: shipping.name,
-        shipping_address: shipping.address,
-        shipping_city: shipping.city,
-        shipping_zip: shipping.zip,
+        shipping_name: input.name,
+        shipping_address: input.address,
+        shipping_city: input.city,
+        shipping_zip: input.zip,
       })
       .returning('id')
       .executeTakeFirstOrThrow()
@@ -295,7 +299,18 @@ export function createOrderForUser(
       )
       .execute()
 
-    await trx.deleteFrom('cart_items').where('cart_id', '=', cart.id).execute()
+    // Delete only the consumed rows. cart_id predicate is defense-in-depth: even
+    // if a stale/foreign id slipped past the in-memory filter, the cart_id scope
+    // prevents touching another user's cart.
+    await trx
+      .deleteFrom('cart_items')
+      .where('cart_id', '=', cart.id)
+      .where(
+        'id',
+        'in',
+        items.map((it) => it.id),
+      )
+      .execute()
     return order
   })
 }

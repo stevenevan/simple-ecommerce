@@ -7,3 +7,11 @@ export const checkoutShippingSchema = z.object({
   zip:     z.string().trim().regex(/^\d{4,10}$/, { error: 'Digits only (4–10)' }),
 })
 export type CheckoutShippingInput = z.infer<typeof checkoutShippingSchema>
+
+// selectedItemIds: empty array is schema-valid by design; the 'nothing_selected'
+// error is thrown in the transaction layer (createOrderForUser), not here.
+// Do not add .min(1) — that would re-route empty-selection failures into 'invalid_form'.
+export const placeOrderSchema = checkoutShippingSchema.extend({
+  selectedItemIds: z.array(z.number().int().positive()),
+})
+export type PlaceOrderInput = z.infer<typeof placeOrderSchema>

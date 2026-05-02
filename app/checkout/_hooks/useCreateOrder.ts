@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { HTTPError } from 'ky'
 import { toast } from 'sonner'
 import { api } from '@/lib/api-client'
-import type { CheckoutShippingInput } from '@/lib/schemas/checkout'
+import type { PlaceOrderInput } from '@/lib/schemas/checkout'
 import { friendlyOf } from '@/lib/hooks/_friendlyErrors'
 
 // Mirrors the same helper in app/orders/_hooks/useOrders.ts (none — orders is read-only)
@@ -20,7 +20,7 @@ async function parseOrderError(e: unknown): Promise<Error> {
 export function useCreateOrder() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: CheckoutShippingInput) => {
+    mutationFn: async (input: PlaceOrderInput) => {
       try {
         return await api.post('orders', { json: input }).json<{ id: number }>()
       } catch (e) {

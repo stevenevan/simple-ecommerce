@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { ShoppingCart, Minus, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Sheet,
   SheetContent,
@@ -15,6 +16,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { useCart } from '@/lib/hooks/useCart'
+import { useCartSelection } from '@/lib/hooks/useCartSelection'
 import { useUpdateQty, useRemoveItem } from '@/app/_hooks/useCartDrawerMutations'
 import { useMe } from '@/lib/hooks/useMe'
 import { formatCurrency } from '@/lib/format'
@@ -23,6 +25,7 @@ import { safeProductImage } from '@/lib/image'
 export function CartDrawer() {
   const { data: me } = useMe()
   const cart = useCart()
+  const selection = useCartSelection()
   const updateQty = useUpdateQty()
   const removeItem = useRemoveItem()
   const router = useRouter()
@@ -44,6 +47,8 @@ export function CartDrawer() {
 
   const items = cart.data?.items ?? []
   const count = items.length
+  const selectedItems = items.filter((it) => selection.isSelected(it.id))
+  const selectedSubtotal = selectedItems.reduce((sum, it) => sum + it.line_total_cents, 0)
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -74,8 +79,15 @@ export function CartDrawer() {
             <ul className="divide-y">
               {items.map((it) => {
                 const isPending = updateQty.isPending || removeItem.isPending
+                const checked = selection.isSelected(it.id)
                 return (
-                  <li key={it.id} className="flex gap-3 py-3">
+                  <li key={it.id} className="flex items-start gap-3 py-3">
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={() => selection.toggle(it.id)}
+                      aria-label={`Select ${it.name}`}
+                      className="mt-1"
+                    />
                     {/* Plain <img> by design — 64px thumbnail; ProductImage is sized for 800px detail view. Plan §5.4 + §9. */}
                     {/* oxlint-disable-next-line nextjs/no-img-element */}
                     <img
@@ -147,11 +159,11 @@ export function CartDrawer() {
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Subtotal</span>
             <span className="font-medium tabular-nums">
-              {formatCurrency(cart.data?.subtotalCents ?? 0)}
+              {formatCurrency(selectedSubtotal)}
             </span>
           </div>
           <Button
-            disabled={items.length === 0}
+            disabled={selectedItems.length === 0}
             onClick={() => {
               setOpen(false)
               router.push('/checkout')

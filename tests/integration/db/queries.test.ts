@@ -235,10 +235,13 @@ describe('createOrderForUser', () => {
     const p1 = await seedProduct({ slug: 'p1', name: 'P1', price_cents: 1000, stock: 5 })
     const p2 = await seedProduct({ slug: 'p2', name: 'P2', price_cents: 250, stock: 5 })
     const cart = await getOrCreateCart(u.id)
-    await seedCartItem(cart.id, p1.id, 2)
-    await seedCartItem(cart.id, p2.id, 3)
+    const ci1 = await seedCartItem(cart.id, p1.id, 2)
+    const ci2 = await seedCartItem(cart.id, p2.id, 3)
 
-    const order = await createOrderForUser(u.id, SHIPPING)
+    const order = await createOrderForUser(u.id, {
+      ...SHIPPING,
+      selectedItemIds: [ci1.id, ci2.id],
+    })
 
     // total_cents = 1000*2 + 250*3 = 2750
     const got = await kdb
@@ -275,14 +278,18 @@ describe('createOrderForUser', () => {
   it('empty cart throws cart_empty; no order rows created', async () => {
     const u = await seedUser({ email: 'a@b.co', password: 'pass1234' })
     await getOrCreateCart(u.id) // cart exists but no items
-    await expect(createOrderForUser(u.id, SHIPPING)).rejects.toThrow('cart_empty')
+    await expect(
+      createOrderForUser(u.id, { ...SHIPPING, selectedItemIds: [] }),
+    ).rejects.toThrow('cart_empty')
     const orders = await kdb.selectFrom('orders').selectAll().execute()
     expect(orders).toEqual([])
   })
 
   it('no cart at all throws cart_empty', async () => {
     const u = await seedUser({ email: 'a@b.co', password: 'pass1234' })
-    await expect(createOrderForUser(u.id, SHIPPING)).rejects.toThrow('cart_empty')
+    await expect(
+      createOrderForUser(u.id, { ...SHIPPING, selectedItemIds: [] }),
+    ).rejects.toThrow('cart_empty')
   })
 
   it('insufficient stock on second item rolls back first decrement', async () => {
@@ -290,10 +297,12 @@ describe('createOrderForUser', () => {
     const p1 = await seedProduct({ slug: 'p1', stock: 5 })
     const p2 = await seedProduct({ slug: 'p2', stock: 1 })
     const cart = await getOrCreateCart(u.id)
-    await seedCartItem(cart.id, p1.id, 2)
-    await seedCartItem(cart.id, p2.id, 5)
+    const ci1 = await seedCartItem(cart.id, p1.id, 2)
+    const ci2 = await seedCartItem(cart.id, p2.id, 5)
 
-    await expect(createOrderForUser(u.id, SHIPPING)).rejects.toThrow('insufficient_stock')
+    await expect(
+      createOrderForUser(u.id, { ...SHIPPING, selectedItemIds: [ci1.id, ci2.id] }),
+    ).rejects.toThrow('insufficient_stock')
 
     // first item's decrement rolled back
     const sp1 = await kdb.selectFrom('products').select('stock').where('id', '=', p1.id).executeTakeFirstOrThrow()
@@ -314,8 +323,10 @@ describe('createOrderForUser', () => {
     const u = await seedUser({ email: 'a@b.co', password: 'pass1234' })
     const p = await seedProduct({ price_cents: Number.MAX_SAFE_INTEGER, stock: 10 })
     const cart = await getOrCreateCart(u.id)
-    await seedCartItem(cart.id, p.id, 2)
-    await expect(createOrderForUser(u.id, SHIPPING)).rejects.toThrow('total_overflow')
+    const ci = await seedCartItem(cart.id, p.id, 2)
+    await expect(
+      createOrderForUser(u.id, { ...SHIPPING, selectedItemIds: [ci.id] }),
+    ).rejects.toThrow('total_overflow')
   })
 
   it('concurrent stock race: only one of two parallel orders for the last unit succeeds', async () => {
@@ -329,12 +340,12 @@ describe('createOrderForUser', () => {
     const p = await seedProduct({ stock: 1 })
     const c1 = await getOrCreateCart(u1.id)
     const c2 = await getOrCreateCart(u2.id)
-    await seedCartItem(c1.id, p.id, 1)
-    await seedCartItem(c2.id, p.id, 1)
+    const ci1 = await seedCartItem(c1.id, p.id, 1)
+    const ci2 = await seedCartItem(c2.id, p.id, 1)
 
     const results = await Promise.allSettled([
-      createOrderForUser(u1.id, SHIPPING),
-      createOrderForUser(u2.id, SHIPPING),
+      createOrderForUser(u1.id, { ...SHIPPING, selectedItemIds: [ci1.id] }),
+      createOrderForUser(u2.id, { ...SHIPPING, selectedItemIds: [ci2.id] }),
     ])
 
     const fulfilled = results.filter((r) => r.status === 'fulfilled')

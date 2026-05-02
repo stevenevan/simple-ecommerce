@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useCart } from '@/lib/hooks/useCart'
+import { useCartSelection } from '@/lib/hooks/useCartSelection'
 import { useMe } from '@/lib/hooks/useMe'
 import { useCreateOrder } from './_hooks/useCreateOrder'
 import { checkoutShippingSchema, type CheckoutShippingInput } from '@/lib/schemas/checkout'
@@ -21,6 +22,7 @@ export default function CheckoutPage() {
   const router = useRouter()
   const me = useMe()
   const cart = useCart()
+  const selection = useCartSelection()
   const createOrder = useCreateOrder()
 
   // Flash-of-skeleton-before-redirect is intentional — page is client-only by
@@ -34,7 +36,10 @@ export default function CheckoutPage() {
     validators: { onChange: checkoutShippingSchema },
     onSubmit: async ({ value }) => {
       try {
-        const { id } = await createOrder.mutateAsync(value)
+        const { id } = await createOrder.mutateAsync({
+          ...value,
+          selectedItemIds: selectedItems.map((it) => it.id),
+        })
         router.push(`/checkout/success/${id}`)
       } catch {
         // Toast already fired in useCreateOrder.onError; swallow so TanStack
@@ -74,7 +79,8 @@ export default function CheckoutPage() {
   }
 
   const items = cart.data?.items ?? []
-  const subtotalCents = cart.data?.subtotalCents ?? 0
+  const selectedItems = items.filter((it) => selection.isSelected(it.id))
+  const subtotalCents = selectedItems.reduce((sum, it) => sum + it.line_total_cents, 0)
 
   if (items.length === 0) {
     return (
@@ -99,33 +105,41 @@ export default function CheckoutPage() {
         <Card>
           <CardContent className="py-4">
             <h2 className="mb-3 text-sm font-medium">Order summary</h2>
-            <ul className="divide-y">
-              {items.map((it) => (
-                <li key={it.id} className="flex gap-3 py-3">
-                  {/* oxlint-disable-next-line nextjs/no-img-element */}
-                  <img
-                    src={safeProductImage(it.image_url)}
-                    alt={it.name}
-                    width={56}
-                    height={56}
-                    className="size-14 shrink-0 rounded object-cover"
-                  />
-                  <div className="flex flex-1 flex-col text-sm">
-                    <span className="font-medium">{it.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {it.quantity} × {formatCurrency(it.price_cents)}
-                    </span>
-                  </div>
-                  <div className="text-sm font-medium tabular-nums">
-                    {formatCurrency(it.line_total_cents)}
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-3 flex items-center justify-between border-t pt-3 text-sm">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span className="font-medium tabular-nums">{formatCurrency(subtotalCents)}</span>
-            </div>
+            {selectedItems.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                No items selected — open the cart to choose what to check out.
+              </p>
+            ) : (
+              <>
+                <ul className="divide-y">
+                  {selectedItems.map((it) => (
+                    <li key={it.id} className="flex gap-3 py-3">
+                      {/* oxlint-disable-next-line nextjs/no-img-element */}
+                      <img
+                        src={safeProductImage(it.image_url)}
+                        alt={it.name}
+                        width={56}
+                        height={56}
+                        className="size-14 shrink-0 rounded object-cover"
+                      />
+                      <div className="flex flex-1 flex-col text-sm">
+                        <span className="font-medium">{it.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {it.quantity} × {formatCurrency(it.price_cents)}
+                        </span>
+                      </div>
+                      <div className="text-sm font-medium tabular-nums">
+                        {formatCurrency(it.line_total_cents)}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-3 flex items-center justify-between border-t pt-3 text-sm">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="font-medium tabular-nums">{formatCurrency(subtotalCents)}</span>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -229,7 +243,9 @@ export default function CheckoutPage() {
                   {([canSubmit, isSubmitting]) => (
                     <Button
                       type="submit"
-                      disabled={!canSubmit || isSubmitting || items.length === 0}
+                      disabled={
+                        !canSubmit || isSubmitting || selectedItems.length === 0
+                      }
                     >
                       {isSubmitting ? 'Placing order…' : 'Place order'}
                     </Button>
