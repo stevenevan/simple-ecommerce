@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { resetDb, getProductStock, countOrders, insertCartItemDirect } from '../fixtures/db'
 import { registerUser } from '../fixtures/user'
+import { expectNoLeakageInBody } from '../fixtures/assertions'
 
 const VALID_SHIPPING = {
   name: 'Buyer One',
@@ -31,7 +32,7 @@ test.describe('POST /api/orders — happy path', () => {
 
     // Detail + snapshot
     const detail = await (await u.context.get(`/api/orders/${id}`)).json()
-    expect(detail.order).toMatchObject({ total_cents: 2000, shipping_zip: '12345' })
+    expect(detail.order).toMatchObject({ shipping_zip: '12345' })
     expect(detail.items).toHaveLength(1)
     expect(detail.items[0]).toMatchObject({
       product_id: 1,
@@ -39,6 +40,15 @@ test.describe('POST /api/orders — happy path', () => {
       price_cents_snapshot: 1000,
       quantity: 2,
     })
+
+    // INVARIANT (workshop deck — vitest snippet layer 3): total === sum(line items).
+    // Replaces the implicit literal pin `total_cents: 2000` against seed prices.
+    const expectedTotal = detail.items.reduce(
+      (sum: number, i: { price_cents_snapshot: number; quantity: number }) =>
+        sum + i.price_cents_snapshot * i.quantity,
+      0,
+    )
+    expect(detail.order.total_cents).toBe(expectedTotal)
 
     // Stock decrement
     expect(await getProductStock(1)).toBe(stockBefore - 2)
@@ -88,7 +98,11 @@ test.describe('POST /api/orders — failure paths', () => {
     await insertCartItemDirect(u.userId, 4, 2)
     const res = await u.context.post('/api/orders', { data: VALID_SHIPPING })
     expect(res.status()).toBe(500)
-    expect((await res.json()).error).toBe('server_error')
+    const body = await res.json()
+    expect(body.error).toBe('server_error')
+    // Negative contract (workshop rule: describe what must never happen).
+    // The 500 path's catch block could leak DB internals — guard the envelope.
+    expectNoLeakageInBody(body, expect)
     await u.context.dispose()
   })
 

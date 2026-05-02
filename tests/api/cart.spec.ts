@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { resetDb } from '../fixtures/db'
 import { registerUser } from '../fixtures/user'
+import { expectNoLeakageInBody } from '../fixtures/assertions'
 
 test.beforeEach(async () => {
   await resetDb()
@@ -44,7 +45,10 @@ test.describe('POST /api/cart/items', () => {
     await u.context.post('/api/cart/items', { data: { productId: 1, quantity: 4 } })
     const over = await u.context.post('/api/cart/items', { data: { productId: 1, quantity: 2 } })
     expect(over.status()).toBe(409)
-    expect((await over.json()).error).toBe('insufficient_stock')
+    const body = await over.json()
+    expect(body.error).toBe('insufficient_stock')
+    // Negative contract (workshop rule: describe what must never happen).
+    expectNoLeakageInBody(body, expect)
     await u.context.dispose()
   })
 

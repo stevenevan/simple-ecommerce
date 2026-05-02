@@ -1,12 +1,9 @@
 import { test, expect, request as playwrightRequest } from '@playwright/test'
 import { resetDb } from '../fixtures/db'
 import { registerUser, VALID_PASSWORD } from '../fixtures/user'
+import { expectNoLeakageInBody } from '../fixtures/assertions'
 
 const BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:3000'
-// bcryptjs (pure JS, cost 10) is ~70-90ms on modern Macs; floor at 40ms still
-// proves bcrypt actually ran (a no-bcrypt path would return < 10ms).
-const BCRYPT_FLOOR_MS = 40
-const TIMING_CEILING_MS = 5000
 
 function parseSetCookie(setCookie: string | null): Record<string, string | true> | null {
   if (!setCookie) return null
@@ -39,6 +36,9 @@ test.describe('register', () => {
     expect(setCookie).toBeTruthy()
     const cookies = parseSetCookie(setCookie ?? null)
     expect(cookies).not.toBeNull()
+    // Security regression guard on our sessionOptions output, not iron-session-coverage.
+    // Catches an accidental `httpOnly: false` / wrong SameSite / over-broad Domain
+    // in lib/session.ts:cookieOptions.
     expect(cookies!.sec_session).toBeTruthy()
     expect(cookies!.HttpOnly).toBe(true)
     expect(String(cookies!.SameSite).toLowerCase()).toBe('lax')
@@ -56,6 +56,8 @@ test.describe('register', () => {
     const body = await res.json()
     expect(body.error).toBe('invalid_form')
     expect(body.fields.email).toBeTruthy()
+    // Negative contract (workshop rule: describe what must never happen).
+    expectNoLeakageInBody(body, expect)
   })
 
   test('rejects password missing letter (representative strength check)', async ({ request }) => {
@@ -102,16 +104,9 @@ test.describe('login', () => {
     expect((await res.json()).error).toBe('invalid_credentials')
   })
 
-  test('unknown email returns 401 and runs bcrypt (≥100ms via dummy hash)', async ({ request }) => {
-    const t0 = Date.now()
-    const res = await request.post('/api/auth/login', {
-      data: { email: 'nonexistent@example.test', password: VALID_PASSWORD },
-    })
-    const elapsed = Date.now() - t0
-    expect(res.status()).toBe(401)
-    expect(elapsed).toBeGreaterThanOrEqual(BCRYPT_FLOOR_MS)
-    expect(elapsed).toBeLessThan(TIMING_CEILING_MS)
-  })
+  // Bcrypt-runs-on-unknown-email is covered the workshop-correct way by
+  // tests/integration/api/auth-login.test.ts via vi.spyOn(bcrypt, 'compare') —
+  // tests our call site, not bcryptjs's wall-clock. Don't re-add a timing floor here.
 
   test('malformed JSON body returns 400 invalid_form', async ({ request }) => {
     const res = await request.post('/api/auth/login', {

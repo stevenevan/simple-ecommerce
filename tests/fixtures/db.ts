@@ -61,3 +61,15 @@ export async function getUserIdByEmail(email: string): Promise<number> {
     .executeTakeFirstOrThrow()
   return row.id
 }
+
+export async function getLatestOrderForUser(userId: number): Promise<{
+  total_cents: number
+}> {
+  return kdb
+    .selectFrom('orders')
+    .select(['total_cents'])
+    .where('user_id', '=', userId)
+    .orderBy('created_at', 'desc')
+    .limit(1)
+    .executeTakeFirstOrThrow()
+}

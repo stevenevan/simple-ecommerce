@@ -1,21 +1,14 @@
+// Workshop rule (article 01 ICCAF): tests encode OUR acceptance criteria,
+// not the library's stock behavior. Pure-zod-validator tests removed
+// (z.email() coverage, "accepts valid input" boilerplate). Boundary tests
+// pin OUR numeric/regex/refinement/transform rules.
+
 import { describe, expect, it } from 'vitest'
 import { loginSchema, registerSchema } from '@/lib/schemas/auth'
 import { checkoutShippingSchema } from '@/lib/schemas/checkout'
 
 describe('loginSchema', () => {
   const ok = { email: 'a@b.co', password: 'aaaaaaaa' }
-
-  it('accepts valid input', () => {
-    expect(loginSchema.safeParse(ok).success).toBe(true)
-  })
-
-  it('rejects empty email', () => {
-    expect(loginSchema.safeParse({ ...ok, email: '' }).success).toBe(false)
-  })
-
-  it('rejects malformed email', () => {
-    expect(loginSchema.safeParse({ ...ok, email: 'not-an-email' }).success).toBe(false)
-  })
 
   it('rejects email > 254 chars', () => {
     const long = 'a'.repeat(250) + '@b.co'
@@ -29,15 +22,10 @@ describe('loginSchema', () => {
   it('rejects password > 200 chars', () => {
     expect(loginSchema.safeParse({ ...ok, password: 'a'.repeat(201) }).success).toBe(false)
   })
-
 })
 
 describe('registerSchema', () => {
   const ok = { email: 'a@b.co', name: 'A', password: 'pass1234' }
-
-  it('accepts valid input', () => {
-    expect(registerSchema.safeParse(ok).success).toBe(true)
-  })
 
   it('rejects password without letter', () => {
     expect(registerSchema.safeParse({ ...ok, password: '12345678' }).success).toBe(false)
@@ -66,23 +54,19 @@ describe('registerSchema', () => {
 describe('checkoutShippingSchema', () => {
   const ok = { name: 'Jane', address: '1 St', city: 'NYC', zip: '12345' }
 
-  it('accepts valid input', () => {
-    expect(checkoutShippingSchema.safeParse(ok).success).toBe(true)
-  })
-
-  it('rejects 3-digit zip', () => {
+  it('rejects 3-digit zip (our 4-min boundary)', () => {
     expect(checkoutShippingSchema.safeParse({ ...ok, zip: '123' }).success).toBe(false)
   })
 
-  it('rejects 11-digit zip', () => {
+  it('rejects 11-digit zip (our 10-max boundary)', () => {
     expect(checkoutShippingSchema.safeParse({ ...ok, zip: '12345678901' }).success).toBe(false)
   })
 
-  it('rejects alpha in zip', () => {
+  it('rejects alpha in zip (our digits-only regex — char class)', () => {
     expect(checkoutShippingSchema.safeParse({ ...ok, zip: '12abc' }).success).toBe(false)
   })
 
-  it('rejects hyphenated zip', () => {
+  it('rejects hyphenated zip (our digits-only regex — separator)', () => {
     expect(checkoutShippingSchema.safeParse({ ...ok, zip: '12345-6789' }).success).toBe(false)
   })
 
