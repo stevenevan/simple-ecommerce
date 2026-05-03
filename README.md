@@ -8,10 +8,10 @@ Prereq: **Node 24** (`.nvmrc` provided; `nvm use` if available).
 
 ```bash
 node --version          # v24.x.x
-bun install
+npm install
 cp .env.example .env    # then set SESSION_SECRET (32+ chars)
-bun run db:reset
-bun dev
+npm run db:reset
+npm run dev
 ```
 
 ### Known limitations
@@ -24,11 +24,11 @@ bun dev
 
 ### Seed images
 
-`bun run db:seed` falls back to `/seed-images/missing.jpg` for any product whose
+`npm run db:seed` falls back to `/seed-images/missing.jpg` for any product whose
 image file is absent. Pull the real Unsplash photos with:
 
 ```bash
-bun run images:download
+npm run images:download
 ```
 
 
@@ -36,12 +36,12 @@ bun run images:download
 
 Two suites:
 
-- **Vitest** (`bun run test`) — unit tests in `tests/unit/` and in-process
+- **Vitest** (`npm test`) — unit tests in `tests/unit/` and in-process
   integration tests in `tests/integration/` (route handlers + Kysely against
   an in-memory SQLite via `SQLITE_PATH=:memory:`).
-- **Playwright** (`bun run test:e2e`) — API-level specs in `tests/api/` and a
+- **Playwright** (`npm run test:e2e`) — API-level specs in `tests/api/` and a
   browser happy-path in `tests/e2e/`. Covers money/crash paths: order creation,
-  stock race, cart mutations, auth, IDOR. Run `bun run test:e2e:install` once
+  stock race, cart mutations, auth, IDOR. Run `npm run test:e2e:install` once
   to fetch Chromium. The runner uses a separate `data/test.db` plus a pinned
   test-only `SESSION_SECRET` and boots the dev server on port `3100`.
 
@@ -65,8 +65,6 @@ npm run dev
 yarn dev
 # or
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

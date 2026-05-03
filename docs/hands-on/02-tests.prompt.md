@@ -6,8 +6,8 @@ Add Vitest unit assertions and one Playwright e2e spec covering per-item cart se
 
 - The cart-select feature was implemented in a previous Claude Code session — you are reading the diff fresh. Run `git diff main -- app lib` and read every changed file before writing tests.
 - Test runners already wired:
-  - Vitest: `bun vitest run`
-  - Playwright: `bun playwright test`
+  - Vitest: `npm test`
+  - Playwright: `npm run test:e2e`
 - Existing patterns to imitate verbatim (read both before writing):
   - `tests/unit/schemas.test.ts` — zod-schema unit-test shape.
   - `tests/e2e/happy-path.spec.ts` — Playwright spec shape. Note: that file **registers** a fresh user with a `Date.now()` email rather than logging an existing one in. Copy that auth setup. Do not author a new fixture.
@@ -44,5 +44,5 @@ One Playwright spec:
   2. Assertion does **not** match the acceptance text → test bug. Fix the test, re-run.
   3. Assertion matches acceptance + production diff under `app`/`lib` does **not** satisfy the acceptance behavior → real production bug. Patch production with the smallest change that makes the test green (no refactor, no rename, no adjacent cleanup). Re-run.
   4. Three iterations and still red without a clear class above → STOP and report. Don't loop.
-- Stop after `bun vitest run` is green and `bun playwright test cart-select` is green, **or** after STOP per (4).
+- Stop after `npm test` is green and `npx playwright test cart-select` is green, **or** after STOP per (4).
 - Final report format: per-file green/red + list every production file you touched and the one-line reason (per Article 02 / Surgical Changes — every prod edit traces to a failing assertion).

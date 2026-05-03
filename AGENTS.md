@@ -16,5 +16,5 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Tests
 
-- `bun run test` — Vitest. Unit (`tests/unit/`) + in-process integration (`tests/integration/`) against in-memory SQLite. Setup pins `SESSION_SECRET` and `SQLITE_PATH=:memory:` in `vitest.config.ts`.
-- `bun run test:e2e` — Playwright. API specs in `tests/api/`, browser specs in `tests/e2e/`. Boots dev server on `:3100` against `data/test.db` with pinned test-only `SESSION_SECRET`.
+- `npm test` — Vitest. Unit (`tests/unit/`) + in-process integration (`tests/integration/`) against in-memory SQLite. Setup pins `SESSION_SECRET` and `SQLITE_PATH=:memory:` in `vitest.config.ts`.
+- `npm run test:e2e` — Playwright. API specs in `tests/api/`, browser specs in `tests/e2e/`. Boots dev server on `:3100` against `data/test.db` with pinned test-only `SESSION_SECRET`.

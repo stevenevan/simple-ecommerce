@@ -1,5 +1,5 @@
 // One-off: download real product photos from Unsplash CDN into public/seed-images/.
-// Usage:  bun run scripts/download-seed-images.ts [--only-missing]
+// Usage:  npm run images:download -- [--only-missing]
 //
 // Source: Unsplash (https://unsplash.com), Unsplash License — free use, no attribution required.
 // CDN URLs are direct (no API key); per-slug photo IDs are pinned below for reproducibility.
@@ -90,4 +90,7 @@ async function main(): Promise<void> {
   }
 }
 
-await main()
+main().catch((err) => {
+  console.error(err)
+  process.exit(1)
+})

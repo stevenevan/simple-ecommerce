@@ -43,4 +43,4 @@ Add per-item selection to the cart so only checked items are placed into the ord
 - Run `/plan-with-review`. When it asks for middle reviewers, answer **d** (skip).
 - After the plan is approved by metis + momus, implement the change.
 - Do **not** author _new_ tests in this turn — tests are a separate prompt in a fresh session. Updating the existing `tests/integration/db/queries.test.ts` callers to match the new `createOrderForUser` signature **is** in scope (per the CONTEXT note above).
-- Stop after `npx tsc --noEmit` is clean and `bun vitest run` is green. Do not run Playwright in this turn.
+- Stop after `npx tsc --noEmit` is clean and `npm test` is green. Do not run Playwright in this turn.
