@@ -21,15 +21,29 @@ bun dev
 - Cart-drawer prices are advisory; the order is charged at the price at submit time (snapshotted into `order_items.price_cents_snapshot`).
 - No email verification, no password reset.
 - `/orders` is unpaginated (full history per request).
-- `e2e/` directory exists but is unused in this milestone.
+
+### Seed images
+
+`bun run db:seed` falls back to `/seed-images/missing.jpg` for any product whose
+image file is absent. Pull the real Unsplash photos with:
+
+```bash
+bun run images:download
+```
 
 
 ## Tests
 
-Playwright e2e + API tests cover critical money/crash paths (order creation,
-stock race, cart mutations, auth, IDOR). Run `bun run test:e2e:install` once to
-fetch Chromium, then `bun run test:e2e`. Tests use a separate `data/test.db`
-and a pinned test-only `SESSION_SECRET`; the dev server boots automatically.
+Two suites:
+
+- **Vitest** (`bun run test`) — unit tests in `tests/unit/` and in-process
+  integration tests in `tests/integration/` (route handlers + Kysely against
+  an in-memory SQLite via `SQLITE_PATH=:memory:`).
+- **Playwright** (`bun run test:e2e`) — API-level specs in `tests/api/` and a
+  browser happy-path in `tests/e2e/`. Covers money/crash paths: order creation,
+  stock race, cart mutations, auth, IDOR. Run `bun run test:e2e:install` once
+  to fetch Chromium. The runner uses a separate `data/test.db` plus a pinned
+  test-only `SESSION_SECRET` and boots the dev server on port `3100`.
 
 ## Auth secret
 
