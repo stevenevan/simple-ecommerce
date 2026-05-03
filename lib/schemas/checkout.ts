@@ -7,3 +7,8 @@ export const checkoutShippingSchema = z.object({
   zip:     z.string().trim().regex(/^\d{4,10}$/, { error: 'Digits only (4–10)' }),
 })
 export type CheckoutShippingInput = z.infer<typeof checkoutShippingSchema>
+
+export const placeOrderSchema = checkoutShippingSchema.extend({
+  selectedItemIds: z.array(z.int().positive()).min(1),
+})
+export type PlaceOrderInput = z.infer<typeof placeOrderSchema>

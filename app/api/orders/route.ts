@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { ensureSession } from '@/lib/auth'
-import { checkoutShippingSchema } from '@/lib/schemas/checkout'
+import { placeOrderSchema } from '@/lib/schemas/checkout'
 import { createOrderForUser, listOrdersForUser } from '@/lib/db/queries'
 
 export const dynamic = 'force-dynamic'
@@ -25,7 +25,19 @@ export async function POST(req: NextRequest) {
   const user = await ensureSession()
   if (user instanceof Response) return user
 
-  const parsed = checkoutShippingSchema.safeParse(await req.json().catch(() => null))
+  const body = await req.json().catch(() => null)
+
+  // nothing_selected pre-check (more specific than the schema's invalid_form envelope)
+  if (
+    body !== null &&
+    typeof body === 'object' &&
+    Array.isArray((body as { selectedItemIds?: unknown }).selectedItemIds) &&
+    (body as { selectedItemIds: unknown[] }).selectedItemIds.length === 0
+  ) {
+    return Response.json({ error: 'nothing_selected' }, { status: 400, headers: NO_STORE })
+  }
+
+  const parsed = placeOrderSchema.safeParse(body)
   if (!parsed.success) {
     return Response.json(
       { error: 'invalid_form', fields: z.flattenError(parsed.error).fieldErrors },
