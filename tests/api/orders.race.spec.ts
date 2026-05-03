@@ -30,9 +30,22 @@ test.describe('order race — single-unit stock', () => {
       await a.context.post('/api/cart/items', { data: { productId: 2, quantity: 1 } })
       await b.context.post('/api/cart/items', { data: { productId: 2, quantity: 1 } })
 
+      // Schema requires selectedItemIds — fetch each user's cart once before
+      // the race so the concurrent POSTs hit the contended UPDATE.
+      const [cartA, cartB] = await Promise.all([
+        a.context.get('/api/cart').then((r) => r.json()),
+        b.context.get('/api/cart').then((r) => r.json()),
+      ])
+      const idsA = cartA.items.map((i: { id: number }) => i.id)
+      const idsB = cartB.items.map((i: { id: number }) => i.id)
+
       const settled = await Promise.allSettled([
-        a.context.post('/api/orders', { data: VALID_SHIPPING }),
-        b.context.post('/api/orders', { data: VALID_SHIPPING }),
+        a.context.post('/api/orders', {
+          data: { ...VALID_SHIPPING, selectedItemIds: idsA },
+        }),
+        b.context.post('/api/orders', {
+          data: { ...VALID_SHIPPING, selectedItemIds: idsB },
+        }),
       ])
 
       // Both promises must have resolved (not rejected/hung).

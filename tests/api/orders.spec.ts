@@ -20,7 +20,11 @@ test.describe('POST /api/orders — happy path', () => {
     await u.context.post('/api/cart/items', { data: { productId: 1, quantity: 2 } })
 
     const stockBefore = await getProductStock(1)
-    const res = await u.context.post('/api/orders', { data: VALID_SHIPPING })
+    const cartBefore = await (await u.context.get('/api/cart')).json()
+    const selectedItemIds = cartBefore.items.map((i: { id: number }) => i.id)
+    const res = await u.context.post('/api/orders', {
+      data: { ...VALID_SHIPPING, selectedItemIds },
+    })
     expect(res.status()).toBe(200)
     const { id } = await res.json()
     expect(typeof id).toBe('number')
@@ -64,7 +68,13 @@ test.describe('POST /api/orders — happy path', () => {
 test.describe('POST /api/orders — failure paths', () => {
   test('empty cart → 400 cart_empty', async () => {
     const u = await registerUser('order-empty')
-    const res = await u.context.post('/api/orders', { data: VALID_SHIPPING })
+    // Send a non-empty placeholder id so placeOrderSchema (.min(1)) passes;
+    // the freshly-registered user has no carts row at all, so
+    // createOrderForUser hits `if (!cart) throw cart_empty` before it
+    // inspects selectedItemIds.
+    const res = await u.context.post('/api/orders', {
+      data: { ...VALID_SHIPPING, selectedItemIds: [1] },
+    })
     expect(res.status()).toBe(400)
     expect((await res.json()).error).toBe('cart_empty')
     await u.context.dispose()
@@ -73,11 +83,13 @@ test.describe('POST /api/orders — failure paths', () => {
   test('insufficient stock (bypass cart guard) → 409, no row written, stock unchanged', async () => {
     const u = await registerUser('order-stock')
     // Direct DB insert: cart_items qty 2 for product:2 (stock 1) — bypasses cart layer guard
-    await insertCartItemDirect(u.userId, 2, 2)
+    const ci = await insertCartItemDirect(u.userId, 2, 2)
     const stockBefore = await getProductStock(2)
     const orderCountBefore = await countOrders()
 
-    const res = await u.context.post('/api/orders', { data: VALID_SHIPPING })
+    const res = await u.context.post('/api/orders', {
+      data: { ...VALID_SHIPPING, selectedItemIds: [ci.id] },
+    })
     expect(res.status()).toBe(409)
     expect((await res.json()).error).toBe('insufficient_stock')
 
@@ -95,8 +107,10 @@ test.describe('POST /api/orders — failure paths', () => {
     const u = await registerUser('order-overflow')
     // product:4 has price floor(MAX_SAFE_INTEGER/2)+1; qty 2 multiplies past MAX_SAFE_INTEGER
     // and trips Number.isSafeInteger(totalCents) at lib/db/queries.ts:270.
-    await insertCartItemDirect(u.userId, 4, 2)
-    const res = await u.context.post('/api/orders', { data: VALID_SHIPPING })
+    const ci = await insertCartItemDirect(u.userId, 4, 2)
+    const res = await u.context.post('/api/orders', {
+      data: { ...VALID_SHIPPING, selectedItemIds: [ci.id] },
+    })
     expect(res.status()).toBe(500)
     const body = await res.json()
     expect(body.error).toBe('server_error')
@@ -126,8 +140,16 @@ test.describe('POST /api/orders — failure paths', () => {
   test('IDOR — userB GET userA order → 404', async () => {
     const a = await registerUser('order-idor-a')
     await a.context.post('/api/cart/items', { data: { productId: 1, quantity: 1 } })
-    const created = await a.context.post('/api/orders', { data: VALID_SHIPPING })
+    const cartA = await (await a.context.get('/api/cart')).json()
+    const created = await a.context.post('/api/orders', {
+      data: {
+        ...VALID_SHIPPING,
+        selectedItemIds: cartA.items.map((i: { id: number }) => i.id),
+      },
+    })
+    expect(created.status()).toBe(200) // precondition: A's order really exists
     const { id } = await created.json()
+    expect(typeof id).toBe('number')
 
     const b = await registerUser('order-idor-b')
     const res = await b.context.get(`/api/orders/${id}`)
@@ -139,11 +161,22 @@ test.describe('POST /api/orders — failure paths', () => {
   test('list scoped to user — userB sees no userA orders', async () => {
     const a = await registerUser('order-list-a')
     await a.context.post('/api/cart/items', { data: { productId: 1, quantity: 1 } })
-    await a.context.post('/api/orders', { data: VALID_SHIPPING })
+    const cartA = await (await a.context.get('/api/cart')).json()
+    const placed = await a.context.post('/api/orders', {
+      data: {
+        ...VALID_SHIPPING,
+        selectedItemIds: cartA.items.map((i: { id: number }) => i.id),
+      },
+    })
+    expect(placed.status()).toBe(200) // precondition: A's order really exists
+    const { id: aOrderId } = await placed.json()
 
     const b = await registerUser('order-list-b')
     const list = await (await b.context.get('/api/orders')).json()
     expect(list.orders).toHaveLength(0)
+    expect(
+      list.orders.find((o: { id: number }) => o.id === aOrderId),
+    ).toBeUndefined()
     await a.context.dispose()
     await b.context.dispose()
   })

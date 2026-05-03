@@ -28,12 +28,13 @@ export async function insertCartItemDirect(
   userId: number,
   productId: number,
   quantity: number,
-): Promise<void> {
+): Promise<{ id: number }> {
   const cart = await getOrCreateCart(userId)
-  await kdb
+  return kdb
     .insertInto('cart_items')
     .values({ cart_id: cart.id, product_id: productId, quantity })
-    .execute()
+    .returning('id')
+    .executeTakeFirstOrThrow()
 }
 
 export async function getProductStock(id: number): Promise<number> {
