@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart, Minus, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Sheet,
   SheetContent,
@@ -17,6 +18,7 @@ import {
 import { useCart } from '@/lib/hooks/useCart'
 import { useUpdateQty, useRemoveItem } from '@/app/_hooks/useCartDrawerMutations'
 import { useMe } from '@/lib/hooks/useMe'
+import { useCartSelection } from '@/app/_components/CartSelectionContext'
 import { formatCurrency } from '@/lib/format'
 import { safeProductImage } from '@/lib/image'
 
@@ -27,6 +29,19 @@ export function CartDrawer() {
   const removeItem = useRemoveItem()
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const { isExcluded, toggle, prune } = useCartSelection()
+
+  // Hold the raw cached array reference so the effect dep is stable across
+  // renders (TanStack Query keeps the same reference until the cache updates).
+  const itemsFromCart = cart.data?.items
+
+  // Drop excluded ids that are no longer in the cart so the set stays bounded
+  // when the user removes a previously-unchecked row. Must run before the
+  // early return below to satisfy rules-of-hooks.
+  useEffect(() => {
+    if (!itemsFromCart) return
+    prune(itemsFromCart.map((it) => it.id))
+  }, [itemsFromCart, prune])
 
   if (!me?.user) {
     return (
@@ -42,8 +57,10 @@ export function CartDrawer() {
     )
   }
 
-  const items = cart.data?.items ?? []
+  const items = itemsFromCart ?? []
   const count = items.length
+  const selectedItems = items.filter((it) => !isExcluded(it.id))
+  const selectedSubtotal = selectedItems.reduce((s, it) => s + it.line_total_cents, 0)
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -74,8 +91,15 @@ export function CartDrawer() {
             <ul className="divide-y">
               {items.map((it) => {
                 const isPending = updateQty.isPending || removeItem.isPending
+                const checked = !isExcluded(it.id)
                 return (
                   <li key={it.id} className="flex gap-3 py-3">
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={(_v) => toggle(it.id)}
+                      aria-label={`Include ${it.name} in order`}
+                      className="mt-1 self-start"
+                    />
                     {/* Plain <img> by design — 64px thumbnail; ProductImage is sized for 800px detail view. Plan §5.4 + §9. */}
                     {/* oxlint-disable-next-line nextjs/no-img-element */}
                     <img
@@ -147,11 +171,11 @@ export function CartDrawer() {
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Subtotal</span>
             <span className="font-medium tabular-nums">
-              {formatCurrency(cart.data?.subtotalCents ?? 0)}
+              {formatCurrency(selectedSubtotal)}
             </span>
           </div>
           <Button
-            disabled={items.length === 0}
+            disabled={items.length === 0 || selectedItems.length === 0}
             onClick={() => {
               setOpen(false)
               router.push('/checkout')
