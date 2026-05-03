@@ -1,0 +1,1 @@
+../../.claude/agents/metis-plan-consultant.md

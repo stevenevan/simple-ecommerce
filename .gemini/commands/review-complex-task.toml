@@ -1,0 +1,20 @@
+description = "Review a task branch against its base using 1–3 reviewer roles, scaled to risk. Outputs must-fix / should-fix buckets."
+
+prompt = """
+Run the review-complex-task workflow defined in `.agents/skills/review-complex-task/SKILL.md`.
+
+Adaptation for Gemini CLI (no native sub-agents):
+- Play every reviewer role yourself in distinct passes. Use role specs in `.claude/agents/`:
+  - `code-reviewer.md`
+  - `security-auditor.md`
+  - `architect-reviewer.md`
+- Phase 0 — Clarify inputs (target/base branch, acceptance criteria, scope bounds). Ask one consolidated question if anything is missing.
+- Phase 1 — Diff exploration via git: `merge-base`, `log --oneline base..target`, `diff --stat base...target`, `diff base...target` (three dots).
+- Phase 1.5 — Pick 1–3 reviewer roles via the SKILL's signal scan + matrix. Always include `code-reviewer`. Announce chosen set + rationale.
+- Phase 2 — Execute chosen reviewer roles sequentially, each with the SKILL's shared context block + per-role focus prompt. Each pass returns findings (severity, location, problem, fix).
+- Phase 3 — Consolidate into must-fix / should-fix (max 8 each). Drop nitpicks. Apply `[dissent]` rules.
+- Phase 4 — Anti-hallucination pass: verify file exists, lines in diff, quoted code verbatim, symbols exist, severity justified, citations check out. Drop or rewrite anything that fails.
+- Output the exact format from the SKILL. English-only.
+
+Args (target/base/criteria optional): {{args}}
+"""

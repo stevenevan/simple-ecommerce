@@ -1,0 +1,20 @@
+description = "Plan mode with structured Metis → optional middle reviewers → Momus pipeline. Updates plan between each pass."
+
+prompt = """
+Run the plan-with-review workflow defined in `.agents/skills/plan-with-review/SKILL.md`.
+
+Adaptation for Gemini CLI (no native sub-agents):
+- You play every reviewer role yourself, sequentially, in distinct passes.
+- Pass 1 — Author the plan (Context, Changes with file paths, Implementation order, Verification steps).
+- Pass 2 — Metis pass: adopt the role in `.claude/agents/metis-plan-consultant.md`. Surface hidden intentions, ambiguities, scope creep, AI-slop. Update plan.
+- Pass 3 — Ask the user which middle reviewers to include: (a) security-auditor (b) architect-reviewer (c) both (d) skip. Use the role spec under `.claude/agents/`. Update plan.
+- Pass 4 — Momus pass: adopt the role in `.claude/agents/momus-high-accuracy-plan-reviewer.md`. Verify file existence, task executability, QA concreteness, contradictions. Update plan.
+- Pass 5 — Present the final plan with a Review Trail section at the bottom.
+
+Rules:
+- Update the plan file between each pass. The next pass must see prior findings.
+- Never skip Metis or Momus.
+- Keep the plan concise — trim bloat after each round.
+
+Task: {{args}}
+"""
