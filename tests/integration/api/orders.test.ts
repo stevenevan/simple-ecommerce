@@ -69,7 +69,7 @@ describe('POST /api/orders', () => {
     expect(res.status).toBe(400)
   })
 
-  it('400 cart_empty when no cart at all', async () => {
+  it('400 invalid_form when no cart at all (empty selectedItemIds)', async () => {
     await authedWithCart()
     const res = await ordersPOST(makeJsonRequest('/api/orders', {
       method: 'POST',
@@ -77,10 +77,10 @@ describe('POST /api/orders', () => {
     }))
     expect(res.status).toBe(400)
     const json = (await res.json()) as { error: string }
-    expect(json.error).toBe('cart_empty')
+    expect(json.error).toBe('invalid_form')
   })
 
-  it('400 cart_empty when cart exists but has no items', async () => {
+  it('400 invalid_form when cart exists but has no items (empty selectedItemIds)', async () => {
     const u = await authedWithCart()
     await seedCart(u.id)
     const res = await ordersPOST(makeJsonRequest('/api/orders', {
@@ -89,7 +89,7 @@ describe('POST /api/orders', () => {
     }))
     expect(res.status).toBe(400)
     const json = (await res.json()) as { error: string }
-    expect(json.error).toBe('cart_empty')
+    expect(json.error).toBe('invalid_form')
   })
 
   it('409 insufficient_stock mapping', async () => {
