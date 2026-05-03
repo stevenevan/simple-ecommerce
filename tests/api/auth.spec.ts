@@ -3,7 +3,7 @@ import { resetDb } from '../fixtures/db'
 import { registerUser, VALID_PASSWORD } from '../fixtures/user'
 import { expectNoLeakageInBody } from '../fixtures/assertions'
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:3000'
+const BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:3100'
 
 function parseSetCookie(setCookie: string | null): Record<string, string | true> | null {
   if (!setCookie) return null

@@ -48,7 +48,9 @@ describe('harness', () => {
     walk(path.join(REPO_ROOT, 'app'), offenders)
     walk(path.join(REPO_ROOT, 'lib'), offenders)
     const filtered = offenders.filter(
-      (p) => !p.endsWith('/lib/session.ts') && !p.endsWith('/lib/session.tsx'),
+      (p) =>
+        !p.replace(/\\/g, '/').endsWith('/lib/session.ts') &&
+        !p.replace(/\\/g, '/').endsWith('/lib/session.tsx'),
     )
     expect(filtered).toEqual([])
   })
