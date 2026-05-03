@@ -16,6 +16,7 @@
     "db:migrate": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON lib/db/migrate.ts",
     "db:seed": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON lib/db/seed.ts",
     "db:reset": "rm -f data/app.db data/app.db-* && bun run db:migrate && bun run db:seed",
+    "images:download": "bun run scripts/download-seed-images.ts",
     "test:e2e:install": "playwright install chromium",
     "test:e2e": "SQLITE_PATH=data/test.db SESSION_SECRET=test-secret-32-chars-min-do-not-use-prod E2E_PORT=3100 E2E_BASE_URL=http://localhost:3100 playwright test",
     "test:e2e:ui": "SQLITE_PATH=data/test.db SESSION_SECRET=test-secret-32-chars-min-do-not-use-prod E2E_PORT=3100 E2E_BASE_URL=http://localhost:3100 playwright test --ui"
