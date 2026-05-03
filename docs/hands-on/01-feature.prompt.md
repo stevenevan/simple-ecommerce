@@ -1,9 +1,3 @@
-# Feature prompt — cart-select for checkout
-
-> **Speaker:** type `/plan-with-review` in the Claude Code REPL first, then paste the body below as the skill's argument. When the skill asks for middle reviewers, answer **d** (skip).
-
----
-
 ## INTENT
 
 Add per-item selection to the cart so only checked items are placed into the order.

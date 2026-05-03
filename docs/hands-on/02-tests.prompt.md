@@ -1,9 +1,3 @@
-# Tests prompt — cart-select feature
-
-> **Speaker:** open a **fresh** Claude Code session in `simple-ecommerce/`. Paste the body below directly. **Do not** prepend a slash command.
-
----
-
 ## INTENT
 
 Add Vitest unit assertions and one Playwright e2e spec covering per-item cart selection.
