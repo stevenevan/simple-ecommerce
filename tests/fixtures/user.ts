@@ -1,7 +1,7 @@
 import { request as playwrightRequest, expect, type APIRequestContext } from '@playwright/test'
 import { getUserIdByEmail } from './db'
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:3000'
+const BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:3100'
 const VALID_PASSWORD = 'Passw0rd!'
 
 let counter = 0
